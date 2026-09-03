@@ -1,0 +1,423 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =====================================================
+    // FUNÇÕES AUXILIARES
+    // =====================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userExists() {
+      return signedIn()
+        && exists(
+          /databases/$(database)/documents/usuarios/$(request.auth.uid)
+        );
+    }
+
+    function userDoc() {
+      return get(
+        /databases/$(database)/documents/usuarios/$(request.auth.uid)
+      );
+    }
+
+    function activeUser() {
+      return userExists()
+        && userDoc().data.active == true;
+    }
+
+    function sameCompany(companyId) {
+      return activeUser()
+        && userDoc().data.companyId == companyId;
+    }
+
+    function hasRole(roles) {
+      return activeUser()
+        && userDoc().data.role in roles;
+    }
+
+    function validRole(role) {
+      return role in [
+        'admin',
+        'gerente',
+        'vendedor',
+        'estoquista',
+        'financeiro'
+      ];
+    }
+
+
+    // =====================================================
+    // EMPRESAS
+    // =====================================================
+
+    match /empresas/{companyId} {
+
+      // Usuário só pode visualizar sua própria empresa.
+      allow read: if sameCompany(companyId);
+
+      // Somente administrador pode alterar
+      // informações da própria empresa.
+      allow create, update: if sameCompany(companyId)
+        && hasRole(['admin']);
+
+      allow delete: if false;
+
+
+      // ===================================================
+      // PRODUTOS
+      // ===================================================
+
+      match /produtos/{produtoId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create, update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'estoquista'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // CLIENTES
+      // ===================================================
+
+      match /clientes/{clienteId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create, update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'vendedor'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // FORNECEDORES
+      // ===================================================
+
+      match /fornecedores/{fornecedorId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create, update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'estoquista'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // VENDAS
+      // ===================================================
+
+      match /vendas/{vendaId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'vendedor'
+          ]);
+
+        allow update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // MOVIMENTAÇÕES DE ESTOQUE
+      // ===================================================
+
+      match /movimentacoesEstoque/{movimentoId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'estoquista'
+          ]);
+
+        allow update, delete: if false;
+      }
+
+
+      // ===================================================
+      // COMPRAS
+      // ===================================================
+
+      match /compras/{compraId} {
+
+        allow read: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'estoquista',
+            'financeiro'
+          ]);
+
+        allow create: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'estoquista'
+          ]);
+
+        allow update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // FINANCEIRO
+      // ===================================================
+
+      match /financeiro/{lancamentoId} {
+
+        allow read: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'financeiro'
+          ]);
+
+        allow create, update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'financeiro'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // CAIXAS
+      // ===================================================
+
+      match /caixas/{caixaId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create, update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente',
+            'vendedor',
+            'financeiro'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // AUDITORIA
+      // ===================================================
+
+      match /auditoria/{eventoId} {
+
+        allow read: if sameCompany(companyId)
+          && hasRole([
+            'admin'
+          ]);
+
+        allow create: if sameCompany(companyId);
+
+        allow update, delete: if false;
+      }
+
+
+      // ===================================================
+      // CONTADORES
+      // ===================================================
+
+      match /contadores/{contadorId} {
+
+        allow read: if sameCompany(companyId);
+
+        // Alterações devem ser feitas pelas Cloud Functions.
+        allow write: if false;
+      }
+
+
+      // ===================================================
+      // CONFIGURAÇÕES
+      // ===================================================
+
+      match /configuracoes/{configId} {
+
+        allow read: if sameCompany(companyId);
+
+        allow create, update: if sameCompany(companyId)
+          && hasRole([
+            'admin',
+            'gerente'
+          ]);
+
+        allow delete: if false;
+      }
+
+
+      // ===================================================
+      // OUTRAS SUBCOLEÇÕES NÃO CONFIGURADAS
+      // ===================================================
+
+      /*
+        Segurança por padrão.
+
+        Se futuramente criarmos uma nova coleção dentro
+        da empresa, teremos que criar uma regra específica
+        para ela.
+      */
+
+      match /{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+
+    // =====================================================
+    // USUÁRIOS
+    // =====================================================
+
+    match /usuarios/{usuarioId} {
+
+      // ---------------------------------------------------
+      // LER UM USUÁRIO
+      // ---------------------------------------------------
+
+      /*
+        O próprio usuário pode consultar seu perfil.
+
+        Isso é necessário inclusive para o sistema descobrir:
+        companyId
+        role
+        active
+      */
+
+      allow get: if signedIn()
+        && (
+          request.auth.uid == usuarioId
+          ||
+          (
+            activeUser()
+            && hasRole(['admin'])
+            && resource.data.companyId
+              == userDoc().data.companyId
+          )
+        );
+
+
+      // ---------------------------------------------------
+      // LISTAR USUÁRIOS
+      // ---------------------------------------------------
+
+      /*
+        Administradores podem listar usuários,
+        mas somente usuários da própria empresa.
+
+        No JavaScript, a consulta deverá utilizar:
+
+        where("companyId", "==", companyId)
+      */
+
+      allow list: if activeUser()
+        && hasRole(['admin'])
+        && resource.data.companyId
+          == userDoc().data.companyId;
+
+
+      // ---------------------------------------------------
+      // CRIAR PERFIL DE USUÁRIO
+      // ---------------------------------------------------
+
+      /*
+        Um administrador pode criar perfil somente
+        para sua própria empresa.
+      */
+
+      allow create: if activeUser()
+        && hasRole(['admin'])
+        && request.resource.data.companyId
+          == userDoc().data.companyId
+        && validRole(request.resource.data.role);
+
+
+      // ---------------------------------------------------
+      // ALTERAR USUÁRIO
+      // ---------------------------------------------------
+
+      /*
+        Admin só pode alterar usuários da própria empresa.
+
+        Também impedimos que alguém altere o companyId
+        e transfira um usuário para outra empresa.
+      */
+
+      allow update: if activeUser()
+        && hasRole(['admin'])
+
+        && resource.data.companyId
+          == userDoc().data.companyId
+
+        && request.resource.data.companyId
+          == resource.data.companyId
+
+        && validRole(request.resource.data.role);
+
+
+      // ---------------------------------------------------
+      // EXCLUSÃO
+      // ---------------------------------------------------
+
+      allow delete: if false;
+    }
+
+
+    // =====================================================
+    // BLOQUEIO GERAL
+    // =====================================================
+
+    /*
+      Qualquer documento que não possua uma regra
+      específica fica bloqueado.
+    */
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

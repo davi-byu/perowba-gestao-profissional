@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profile() {
+      return firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function sameCompany(companyId) {
+      return signedIn()
+        && profile().active == true
+        && profile().companyId == companyId;
+    }
+
+    function manager() {
+      return profile().role in ['admin', 'gerente'];
+    }
+
+    match /empresas/{companyId}/produtos/{productId}/{fileName} {
+      allow read: if sameCompany(companyId);
+      allow create, update: if sameCompany(companyId)
+        && manager()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if sameCompany(companyId) && manager();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

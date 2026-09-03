@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="description"
+    content="Sistema profissional de gestão de vendas, estoque, caixa e relatórios da Perowba Sports.">
+
+  <meta name="author" content="Davi Victor">
+
+  <meta name="theme-color" content="#0f172a">
+
+  <title>Perowba Gestão</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <link rel="stylesheet" href="estilos/app.css">
+
+  <script type="module" src="scripts/bootstrap.js"></script>
+</head>
+
+
+<body>
+
+  <!-- =====================================================
+       TELA DE CARREGAMENTO
+       ===================================================== -->
+
+  <section id="loading-screen" class="loading-screen" aria-live="polite" aria-busy="true">
+
+    <div class="loading-card">
+
+      <div class="brand brand-login">
+
+        <span class="brand-mark">
+          PS
+        </span>
+
+        <div>
+          <strong>
+            Perowba Gestão
+          </strong>
+
+          <small>
+            Vendas e estoque
+          </small>
+        </div>
+
+      </div>
+
+
+      <div class="loading-spinner" aria-hidden="true"></div>
+
+
+      <p>
+        Carregando seus dados...
+      </p>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =====================================================
+       LOGIN / CADASTRO
+       ===================================================== -->
+
+  <section id="login-screen" class="login-screen hidden">
+
+    <div class="login-card">
+
+
+      <!-- MARCA -->
+
+      <div class="brand brand-login">
+
+        <span class="brand-mark">
+          PS
+        </span>
+
+        <div>
+
+          <strong>
+            Perowba Gestão
+          </strong>
+
+          <small>
+            Vendas e estoque
+          </small>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================================
+           ÁREA DE LOGIN
+           ================================================= -->
+
+      <div id="login-area">
+
+        <h1>
+          Acesse o sistema
+        </h1>
+
+        <p class="muted">
+          Entre na sua conta para acessar sua empresa.
+        </p>
+
+
+        <form id="login-form" class="form-grid one-column">
+
+
+          <!-- E-MAIL -->
+
+          <label>
+
+            E-mail
+
+            <input id="login-email" type="email" required autocomplete="username" placeholder="seuemail@exemplo.com">
+
+          </label>
+
+
+
+          <!-- SENHA -->
+
+          <label>
+
+            Senha
+
+            <input id="login-password" type="password" required autocomplete="current-password"
+              placeholder="Digite sua senha">
+
+          </label>
+
+
+
+          <!-- ENTRAR -->
+
+          <button class="btn primary full" type="submit">
+            Entrar
+          </button>
+
+
+
+          <!-- CRIAR CONTA -->
+
+          <button id="create-account-btn" class="btn secondary full" type="button">
+            Criar minha conta
+          </button>
+
+
+
+          <!-- RECUPERAR SENHA -->
+
+          <button id="reset-password-btn" class="btn secondary full" type="button">
+            Recuperar senha
+          </button>
+
+        </form>
+
+
+
+        <p id="login-error" class="form-error" role="alert"></p>
+
+      </div>
+
+
+
+      <!-- =================================================
+           ÁREA DE CADASTRO
+           ================================================= -->
+
+      <div id="register-area" class="hidden">
+
+        <h1>
+          Crie sua conta
+        </h1>
+
+        <p class="muted">
+          Cadastre sua empresa e comece a usar o Perowba Gestão.
+        </p>
+
+
+        <form id="register-form" class="form-grid one-column">
+
+
+          <!-- NOME -->
+
+          <label>
+
+            Seu nome
+
+            <input id="register-name" type="text" required autocomplete="name" placeholder="Seu nome completo">
+
+          </label>
+
+
+
+          <!-- EMPRESA -->
+
+          <label>
+
+            Nome da empresa
+
+            <input id="register-company" type="text" required autocomplete="organization"
+              placeholder="Nome da sua empresa">
+
+          </label>
+
+
+
+          <!-- E-MAIL -->
+
+          <label>
+
+            E-mail
+
+            <input id="register-email" type="email" required autocomplete="email" placeholder="seuemail@exemplo.com">
+
+          </label>
+
+
+
+          <!-- SENHA -->
+
+          <label>
+
+            Senha
+
+            <input id="register-password" type="password" required minlength="6" autocomplete="new-password"
+              placeholder="Mínimo de 6 caracteres">
+
+          </label>
+
+
+
+          <!-- CONFIRMAR SENHA -->
+
+          <label>
+
+            Confirmar senha
+
+            <input id="register-password-confirm" type="password" required minlength="6" autocomplete="new-password"
+              placeholder="Digite a senha novamente">
+
+          </label>
+
+
+
+          <!-- CIDADE -->
+
+          <label>
+
+            Cidade
+
+            <input id="register-city" type="text" autocomplete="address-level2" placeholder="Ex.: João Pessoa - PB">
+
+          </label>
+
+
+
+          <!-- TELEFONE -->
+
+          <label>
+
+            Telefone
+
+            <input id="register-phone" type="tel" autocomplete="tel" placeholder="(83) 99999-9999">
+
+          </label>
+
+
+
+          <!-- CNPJ -->
+
+          <label>
+
+            CNPJ
+
+            <small class="muted">
+              Opcional
+            </small>
+
+            <input id="register-cnpj" type="text" placeholder="00.000.000/0001-00">
+
+          </label>
+
+
+
+          <!-- CRIAR EMPRESA -->
+
+          <button id="register-submit-btn" class="btn primary full" type="submit">
+            Criar minha empresa
+          </button>
+
+
+
+          <!-- VOLTAR PARA LOGIN -->
+
+          <button id="back-to-login-btn" class="btn secondary full" type="button">
+            Já tenho uma conta
+          </button>
+
+        </form>
+
+
+
+        <p id="register-error" class="form-error" role="alert"></p>
+
+
+        <p id="register-success" class="muted" role="status"></p>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =====================================================
+       SISTEMA
+       ===================================================== -->
+
+  <div id="app-shell" class="app-shell hidden">
+
+
+    <!-- ===================================================
+         MENU LATERAL
+         =================================================== -->
+
+    <aside class="sidebar" id="sidebar">
+
+
+      <!-- MARCA -->
+
+      <div class="brand">
+
+        <span class="brand-mark">
+          PS
+        </span>
+
+        <div>
+
+          <strong id="brand-company">
+            Perowba Sports
+          </strong>
+
+          <small>
+            Gestão profissional
+          </small>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- MENU -->
+
+      <nav class="sidebar-nav" aria-label="Menu principal">
+
+        <button data-route="dashboard" class="nav-item active">
+          <span>▦</span>
+          Painel
+        </button>
+
+
+        <button data-route="pdv" class="nav-item">
+          <span>🛒</span>
+          PDV / Vendas
+        </button>
+
+
+        <button data-route="produtos" class="nav-item">
+          <span>▣</span>
+          Produtos
+        </button>
+
+
+        <button data-route="estoque" class="nav-item">
+          <span>↕</span>
+          Estoque
+        </button>
+
+
+        <button data-route="clientes" class="nav-item">
+          <span>♙</span>
+          Clientes
+        </button>
+
+
+        <button data-route="fornecedores" class="nav-item">
+          <span>⌂</span>
+          Fornecedores
+        </button>
+
+
+        <button data-route="compras" class="nav-item">
+          <span>🧾</span>
+          Compras
+        </button>
+
+
+        <button data-route="caixa" class="nav-item">
+          <span>▤</span>
+          Caixa
+        </button>
+
+
+        <button data-route="financeiro" class="nav-item">
+          <span>R$</span>
+          Financeiro
+        </button>
+
+
+        <button data-route="relatorios" class="nav-item">
+          <span>📊</span>
+          Relatórios
+        </button>
+
+
+        <button data-route="usuarios" class="nav-item admin-only">
+          <span>⚿</span>
+          Usuários
+        </button>
+
+
+        <button data-route="auditoria" class="nav-item admin-only">
+          <span>◉</span>
+          Auditoria
+        </button>
+
+
+        <button data-route="configuracoes" class="nav-item admin-only">
+          <span>⚙</span>
+          Configurações
+        </button>
+
+      </nav>
+
+
+
+      <!-- USUÁRIO / SAIR -->
+
+      <div class="sidebar-footer">
+
+        <span id="sidebar-user"></span>
+
+        <button id="logout-btn" class="btn ghost full" type="button">
+          Sair
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- ===================================================
+         CONTEÚDO PRINCIPAL
+         =================================================== -->
+
+    <main class="main-area">
+
+
+      <!-- TOPO -->
+
+      <header class="topbar">
+
+        <button id="menu-toggle" class="icon-btn" type="button" aria-label="Abrir menu">
+          ☰
+        </button>
+
+
+        <div>
+
+          <h1 id="page-title">
+            Painel
+          </h1>
+
+          <p id="page-subtitle">
+            Visão geral da operação
+          </p>
+
+        </div>
+
+
+        <div class="topbar-actions">
+
+          <span id="current-date"></span>
+
+          <button id="install-btn" class="btn secondary hidden" type="button">
+            Instalar aplicativo
+          </button>
+
+        </div>
+
+      </header>
+
+
+
+      <!-- CONTEÚDO DINÂMICO -->
+
+      <section id="content" class="content" aria-live="polite"></section>
+
+    </main>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       TOAST
+       ===================================================== -->
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+</body>
+
+</html>
