@@ -2264,6 +2264,311 @@
     }
   }
 
+  // =========================================================
+  // PRODUCT BARCODE GENERATOR
+  // =========================================================
+
+  function generateInternalProductBarcode(
+    excludeProductId = ""
+  ) {
+
+    const createDigits =
+      () => {
+
+        let digits =
+          "";
+
+
+        if (
+          window.crypto &&
+          typeof window.crypto.getRandomValues ===
+            "function"
+        ) {
+
+          const values =
+            new Uint32Array(3);
+
+
+          window.crypto.getRandomValues(
+            values
+          );
+
+
+          digits =
+            Array.from(values)
+              .map(
+                value =>
+                  String(
+                    value % 10000
+                  ).padStart(
+                    4,
+                    "0"
+                  )
+              )
+              .join("");
+
+        } else {
+
+          digits =
+            String(
+              Math.floor(
+                Math.random() *
+                1000000000000
+              )
+            ).padStart(
+              12,
+              "0"
+            );
+        }
+
+
+        return digits.slice(
+          0,
+          12
+        );
+      };
+
+
+    for (
+      let attempt = 0;
+      attempt < 100;
+      attempt += 1
+    ) {
+
+      const code =
+        `PWB${createDigits()}`;
+
+
+      const alreadyExists =
+        state.products.some(
+          product =>
+            product.id !==
+              excludeProductId &&
+
+            String(
+              product.barcode ||
+              ""
+            )
+              .trim()
+              .toLowerCase() ===
+              code.toLowerCase()
+        );
+
+
+      if (
+        !alreadyExists
+      ) {
+
+        return code;
+      }
+    }
+
+
+    throw new Error(
+      "Não foi possível gerar um código interno único."
+    );
+  }
+
+
+  function updateProductBarcodeMode() {
+
+    const barcodeInput =
+      $("#product-barcode");
+
+    const manualMode =
+      $("#barcode-mode-manual");
+
+    const generatedMode =
+      $("#barcode-mode-generated");
+
+    const generateButton =
+      $("#generate-product-barcode");
+
+
+    if (
+      !barcodeInput ||
+      !manualMode ||
+      !generatedMode ||
+      !generateButton
+    ) {
+
+      return;
+    }
+
+
+    const generated =
+      generatedMode.checked;
+
+
+    barcodeInput.readOnly =
+      generated;
+
+
+    generateButton.classList.toggle(
+      "hidden",
+      !generated
+    );
+
+
+    barcodeInput.placeholder =
+      generated
+        ? "Clique em Gerar código"
+        : "Digite ou passe o leitor";
+
+
+    if (
+      generated &&
+      !barcodeInput.value.trim()
+    ) {
+
+      try {
+
+        barcodeInput.value =
+          generateInternalProductBarcode(
+            $("#product-id")?.value ||
+            ""
+          );
+
+      } catch (error) {
+
+        toast(
+          error.message ||
+          "Não foi possível gerar o código."
+        );
+      }
+    }
+  }
+
+
+  function bindProductBarcodeControls() {
+
+    const manualMode =
+      $("#barcode-mode-manual");
+
+    const generatedMode =
+      $("#barcode-mode-generated");
+
+    const generateButton =
+      $("#generate-product-barcode");
+
+    const barcodeInput =
+      $("#product-barcode");
+
+
+    if (
+      !manualMode ||
+      !generatedMode ||
+      !generateButton ||
+      !barcodeInput
+    ) {
+
+      return;
+    }
+
+
+    manualMode.addEventListener(
+      "change",
+      updateProductBarcodeMode
+    );
+
+
+    generatedMode.addEventListener(
+      "change",
+      updateProductBarcodeMode
+    );
+
+
+    generateButton.addEventListener(
+      "click",
+      () => {
+
+        try {
+
+          barcodeInput.value =
+            generateInternalProductBarcode(
+              $("#product-id")?.value ||
+              ""
+            );
+
+
+          barcodeInput.focus();
+
+          barcodeInput.select();
+
+
+          toast(
+            "Novo código interno gerado."
+          );
+
+        } catch (error) {
+
+          toast(
+            error.message ||
+            "Não foi possível gerar o código."
+          );
+        }
+      }
+    );
+
+
+    updateProductBarcodeMode();
+  }
+
+
+  function setProductBarcodeMode(
+    barcode
+  ) {
+
+    const code =
+      String(
+        barcode ||
+        ""
+      ).trim();
+
+
+    const barcodeInput =
+      $("#product-barcode");
+
+    const manualMode =
+      $("#barcode-mode-manual");
+
+    const generatedMode =
+      $("#barcode-mode-generated");
+
+
+    if (
+      !barcodeInput ||
+      !manualMode ||
+      !generatedMode
+    ) {
+
+      return;
+    }
+
+
+    barcodeInput.value =
+      code;
+
+
+    const isInternal =
+      code
+        .toUpperCase()
+        .startsWith(
+          "PWB"
+        );
+
+
+    generatedMode.checked =
+      isInternal;
+
+
+    manualMode.checked =
+      !isInternal;
+
+
+    updateProductBarcodeMode();
+  }
+
   function renderProducts() {
     $("#content").innerHTML = `
       <div class="grid two">
@@ -2274,7 +2579,60 @@
               <input type="hidden" id="product-id">
               <label>Nome*<input id="product-name" required></label>
               <label>SKU*<input id="product-sku" required></label>
-              <label>Código de barras<input id="product-barcode"></label>
+              <div class="product-barcode-field">
+
+                <span class="product-barcode-label">
+                  Código de barras
+                </span>
+
+                <div class="barcode-mode-options">
+
+                  <label>
+                    <input
+                      id="barcode-mode-manual"
+                      name="barcode-mode"
+                      type="radio"
+                      value="manual"
+                      checked>
+
+                    Inserir manualmente
+                  </label>
+
+                  <label>
+                    <input
+                      id="barcode-mode-generated"
+                      name="barcode-mode"
+                      type="radio"
+                      value="generated">
+
+                    Gerar código interno
+                  </label>
+
+                </div>
+
+                <div class="barcode-input-row">
+
+                  <input
+                    id="product-barcode"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Digite ou passe o leitor">
+
+                  <button
+                    id="generate-product-barcode"
+                    class="btn secondary hidden"
+                    type="button">
+                    Gerar código
+                  </button>
+
+                </div>
+
+                <small class="barcode-help">
+                  Para produtos com código de fábrica, use o código original.
+                  Para produtos sem código, gere um código interno Perowba.
+                </small>
+
+              </div>
               <label>Categoria<input id="product-category"></label>
               <label>Marca<input id="product-brand"></label>
               <label>Unidade<select id="product-unit"><option>un</option><option>par</option><option>kg</option><option>cx</option></select></label>
@@ -2317,6 +2675,8 @@
     `;
 
     $("#product-form").addEventListener("submit", saveProduct);
+
+    bindProductBarcodeControls();
 
     $("#product-filter").addEventListener("input", event => {
       const term = event.target.value.toLowerCase();
@@ -2400,6 +2760,12 @@
             </button>
 
             <button
+              class="btn secondary small-btn"
+              type="button"
+              data-print-barcode="${p.id}">
+              🖨️ Imprimir etiqueta
+            </button>
+            <button
               class="btn warning small-btn"
               data-toggle-product="${p.id}">
               ${p.active ? "Desativar" : "Ativar"}
@@ -2425,6 +2791,29 @@
       id ||
       uid("prd");
 
+    // GARANTIR CODIGO INTERNO
+
+    if (
+      $("#barcode-mode-generated")?.checked &&
+      !$("#product-barcode").value.trim()
+    ) {
+
+      try {
+
+        $("#product-barcode").value =
+          generateInternalProductBarcode(
+            targetId
+          );
+
+      } catch (error) {
+
+        return toast(
+          error.message ||
+          "Não foi possível gerar o código interno."
+        );
+      }
+    }
+
     const payload = {
       name: $("#product-name").value.trim(),
       sku: $("#product-sku").value.trim(),
@@ -2444,6 +2833,46 @@
       return toast(
         "Nome e SKU são obrigatórios."
       );
+    }
+
+    // VALIDAR CODIGO DE BARRAS DUPLICADO
+
+    if (
+      payload.barcode
+    ) {
+
+      const normalizedBarcode =
+        String(
+          payload.barcode
+        )
+          .trim()
+          .toLowerCase();
+
+
+      const duplicateBarcodeProduct =
+        state.products.find(
+          product =>
+            product.id !==
+              targetId &&
+
+            String(
+              product.barcode ||
+              ""
+            )
+              .trim()
+              .toLowerCase() ===
+              normalizedBarcode
+        );
+
+
+      if (
+        duplicateBarcodeProduct
+      ) {
+
+        return toast(
+          `Este código já pertence ao produto: ${duplicateBarcodeProduct.name}.`
+        );
+      }
     }
 
     if (
@@ -2553,6 +2982,588 @@
     renderProducts();
   }
 
+  // =========================================================
+  // PRODUCT BARCODE PRINTING
+  // =========================================================
+
+  function loadBarcodePrintLibrary() {
+
+    if (
+      window.JsBarcode
+    ) {
+
+      return Promise.resolve();
+    }
+
+
+    if (
+      window.__perowbaJsBarcodePromise
+    ) {
+
+      return window.__perowbaJsBarcodePromise;
+    }
+
+
+    window.__perowbaJsBarcodePromise =
+      new Promise(
+        (
+          resolve,
+          reject
+        ) => {
+
+          const script =
+            document.createElement(
+              "script"
+            );
+
+
+          script.src =
+            "https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js";
+
+
+          script.dataset.perowbaJsbarcode =
+            "true";
+
+
+          script.onload =
+            () => {
+
+              if (
+                window.JsBarcode
+              ) {
+
+                resolve();
+
+              } else {
+
+                window.__perowbaJsBarcodePromise =
+                  null;
+
+                reject(
+                  new Error(
+                    "A biblioteca de código de barras não foi carregada."
+                  )
+                );
+              }
+            };
+
+
+          script.onerror =
+            () => {
+
+              window.__perowbaJsBarcodePromise =
+                null;
+
+              reject(
+                new Error(
+                  "Não foi possível carregar o gerador de código de barras."
+                )
+              );
+            };
+
+
+          document.head.appendChild(
+            script
+          );
+        }
+      );
+
+
+    return window.__perowbaJsBarcodePromise;
+  }
+
+
+  function escapeBarcodeLabelHTML(
+    value
+  ) {
+
+    return String(
+      value ??
+      ""
+    ).replace(
+      /[&<>"']/g,
+      character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[character]
+    );
+  }
+
+
+  async function printProductBarcode(
+    product
+  ) {
+
+    if (
+      !product
+    ) {
+
+      return;
+    }
+
+
+    const barcode =
+      String(
+        product.barcode ||
+        ""
+      ).trim();
+
+
+    if (
+      !barcode
+    ) {
+
+      return toast(
+        "Este produto não possui código de barras."
+      );
+    }
+
+
+    const answer =
+      window.prompt(
+        `Quantas etiquetas deseja imprimir para "${product.name}"?`,
+        "1"
+      );
+
+
+    if (
+      answer === null
+    ) {
+
+      return;
+    }
+
+
+    const quantity =
+      Number(
+        String(answer)
+          .trim()
+      );
+
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity < 1
+    ) {
+
+      return toast(
+        "Digite uma quantidade inteira maior que zero."
+      );
+    }
+
+
+    if (
+      quantity > 500
+    ) {
+
+      return toast(
+        "O máximo é 500 etiquetas por impressão."
+      );
+    }
+
+
+    // Abre a janela imediatamente durante o clique.
+    // Isso reduz o risco de o navegador bloquear o popup.
+
+    const printWindow =
+      window.open(
+        "",
+        "_blank",
+        "width=900,height=700"
+      );
+
+
+    if (
+      !printWindow
+    ) {
+
+      return toast(
+        "O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente."
+      );
+    }
+
+
+    printWindow.document.write(
+      `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Preparando etiquetas...</title>
+        </head>
+        <body
+          style="
+            font-family:Arial,sans-serif;
+            padding:30px;
+          ">
+          Preparando etiquetas...
+        </body>
+        </html>
+      `
+    );
+
+
+    printWindow.document.close();
+
+
+    try {
+
+      await loadBarcodePrintLibrary();
+
+
+      // Criamos o SVG na página principal e depois
+      // copiamos o resultado para a janela de impressão.
+
+      const barcodeSVG =
+        document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "svg"
+        );
+
+
+      window.JsBarcode(
+        barcodeSVG,
+        barcode,
+        {
+          format:
+            "CODE128",
+
+          width:
+            2,
+
+          height:
+            52,
+
+          displayValue:
+            false,
+
+          margin:
+            0
+        }
+      );
+
+
+      const barcodeMarkup =
+        barcodeSVG.outerHTML;
+
+
+      const companyName =
+        String(
+          state.settings?.companyName ||
+          "Perowba Gestão"
+        );
+
+
+      const price =
+        Number(
+          product.price ||
+          0
+        ).toLocaleString(
+          "pt-BR",
+          {
+            style:
+              "currency",
+
+            currency:
+              "BRL"
+          }
+        );
+
+
+      const safeCompany =
+        escapeBarcodeLabelHTML(
+          companyName
+        );
+
+
+      const safeProduct =
+        escapeBarcodeLabelHTML(
+          product.name
+        );
+
+
+      const safeBarcode =
+        escapeBarcodeLabelHTML(
+          barcode
+        );
+
+
+      const safePrice =
+        escapeBarcodeLabelHTML(
+          price
+        );
+
+
+      const labels =
+        Array.from(
+          {
+            length:
+              quantity
+          },
+          () => `
+            <div class="barcode-label">
+
+              <div class="label-company">
+                ${safeCompany}
+              </div>
+
+              <div class="label-product">
+                ${safeProduct}
+              </div>
+
+              <div class="label-price">
+                ${safePrice}
+              </div>
+
+              <div class="label-barcode">
+                ${barcodeMarkup}
+              </div>
+
+              <div class="label-code">
+                ${safeBarcode}
+              </div>
+
+            </div>
+          `
+        ).join(
+          ""
+        );
+
+
+      const printHTML =
+        `
+          <!DOCTYPE html>
+
+          <html lang="pt-BR">
+
+          <head>
+
+            <meta charset="UTF-8">
+
+            <title>
+              Etiquetas - ${safeProduct}
+            </title>
+
+            <style>
+
+              * {
+                box-sizing: border-box;
+              }
+
+
+              html,
+              body {
+                margin: 0;
+                padding: 0;
+              }
+
+
+              body {
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                gap: 3mm;
+
+                padding: 4mm;
+
+                background: white;
+
+                color: #000;
+
+                font-family:
+                  Arial,
+                  Helvetica,
+                  sans-serif;
+              }
+
+
+              .barcode-label {
+                width: 50mm;
+                height: 30mm;
+
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+
+                overflow: hidden;
+
+                padding: 2mm;
+
+                border:
+                  1px dashed
+                  #bcbcbc;
+
+                background:
+                  #fff;
+
+                text-align:
+                  center;
+
+                break-inside:
+                  avoid;
+
+                page-break-inside:
+                  avoid;
+              }
+
+
+              .label-company {
+                width: 100%;
+
+                overflow: hidden;
+
+                margin-bottom: 0.5mm;
+
+                font-size: 7pt;
+                font-weight: 700;
+
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+
+
+              .label-product {
+                width: 100%;
+
+                overflow: hidden;
+
+                font-size: 8pt;
+                font-weight: 700;
+
+                line-height: 1.1;
+
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+
+
+              .label-price {
+                margin:
+                  0.8mm 0;
+
+                font-size: 12pt;
+                font-weight: 800;
+              }
+
+
+              .label-barcode {
+                width: 100%;
+
+                display: flex;
+                justify-content: center;
+
+                overflow: hidden;
+              }
+
+
+              .label-barcode svg {
+                width: 43mm;
+                max-width: 100%;
+
+                height: 11mm;
+              }
+
+
+              .label-code {
+                margin-top: 0.4mm;
+
+                font-family:
+                  "Courier New",
+                  monospace;
+
+                font-size: 6.5pt;
+
+                letter-spacing: 0.4px;
+              }
+
+
+              @media print {
+
+                body {
+                  padding: 0;
+                  gap: 2mm;
+                }
+
+
+                .barcode-label {
+                  border:
+                    0.2mm solid
+                    #ddd;
+                }
+              }
+
+
+              @page {
+                margin: 4mm;
+              }
+
+            </style>
+
+          </head>
+
+
+          <body>
+
+            ${labels}
+
+          </body>
+
+          </html>
+        `;
+
+
+      printWindow.document.open();
+
+
+      printWindow.document.write(
+        printHTML
+      );
+
+
+      printWindow.document.close();
+
+
+      setTimeout(
+        () => {
+
+          printWindow.focus();
+
+          printWindow.print();
+
+        },
+        350
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Erro ao gerar etiqueta:",
+        error
+      );
+
+
+      try {
+
+        printWindow.close();
+
+      } catch (closeError) {
+
+        // Ignora falha ao fechar popup.
+      }
+
+
+      toast(
+        error.message ||
+        "Não foi possível gerar a etiqueta."
+      );
+    }
+  }
+
   function bindProductTableActions() {
     $$("[data-edit-product]").forEach(
       btn =>
@@ -2571,7 +3582,10 @@
             $("#product-id").value = p.id;
             $("#product-name").value = p.name;
             $("#product-sku").value = p.sku;
-            $("#product-barcode").value = p.barcode || "";
+            setProductBarcodeMode(
+              p.barcode ||
+              ""
+            );
             $("#product-category").value = p.category || "";
             $("#product-brand").value = p.brand || "";
             $("#product-unit").value = p.unit;
@@ -2590,6 +3604,39 @@
               top: 0,
               behavior: "smooth"
             });
+          }
+        )
+    );
+
+    // PRINT BARCODE BUTTON EVENTS
+
+    $$("[data-print-barcode]").forEach(
+      btn =>
+        btn.addEventListener(
+          "click",
+          () => {
+
+            const product =
+              state.products.find(
+                item =>
+                  item.id ===
+                  btn.dataset.printBarcode
+              );
+
+
+            if (
+              !product
+            ) {
+
+              return toast(
+                "Produto não encontrado."
+              );
+            }
+
+
+            printProductBarcode(
+              product
+            );
           }
         )
     );

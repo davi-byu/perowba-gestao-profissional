@@ -1904,3 +1904,105 @@ tr:last-child td {
     justify-content: center;
   }
 }
+
+/* ===== PRODUCT BARCODE GENERATOR ===== */
+
+.product-barcode-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+.product-barcode-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+
+.barcode-mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+
+.barcode-mode-options label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+
+  margin: 0;
+
+  font-size: 0.82rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+
+.barcode-mode-options input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+
+.barcode-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+
+.barcode-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+
+.barcode-input-row button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+
+.product-barcode-field input[readonly] {
+  background: #f8fafc;
+  cursor: default;
+}
+
+
+.barcode-help {
+  color: #64748b;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+
+@media (max-width: 700px) {
+
+  .barcode-input-row {
+    flex-direction: column;
+  }
+
+  .barcode-input-row button {
+    width: 100%;
+  }
+
+  .barcode-mode-options {
+    flex-direction: column;
+    gap: 7px;
+  }
+}
+
+/* ===== FIX PRODUTOS FORM ALIGN ===== */
+
+#product-form.form-grid.two-columns {
+  align-items: start;
+}
+
+#product-form.form-grid.two-columns > label,
+#product-form.form-grid.two-columns > div {
+  align-self: start;
+}
