@@ -2006,3 +2006,218 @@ tr:last-child td {
 #product-form.form-grid.two-columns > div {
   align-self: start;
 }
+
+/* ===== BARCODE PRINT SETTINGS MODAL ===== */
+
+.barcode-print-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.62);
+
+  backdrop-filter: blur(3px);
+}
+
+
+.barcode-print-dialog {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+
+  overflow-y: auto;
+
+  border-radius: 16px;
+
+  background: #fff;
+
+  box-shadow:
+    0 24px 60px
+    rgba(15, 23, 42, 0.28);
+}
+
+
+.barcode-print-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 20px 22px 16px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+.barcode-print-header h3 {
+  margin: 0;
+
+  font-size: 1.15rem;
+}
+
+
+.barcode-print-header p {
+  margin: 5px 0 0;
+
+  color: #64748b;
+
+  font-size: 0.85rem;
+}
+
+
+.barcode-print-close {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #f1f5f9;
+
+  color: #334155;
+
+  font-size: 1.55rem;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+
+.barcode-print-close:hover {
+  background: #e2e8f0;
+}
+
+
+#barcode-print-form {
+  padding: 20px 22px 22px;
+}
+
+
+.barcode-print-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 16px;
+}
+
+
+.barcode-print-grid > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  margin: 0;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+
+.barcode-print-grid input,
+.barcode-print-grid select {
+  width: 100%;
+}
+
+
+.barcode-print-checkbox {
+  grid-column: 1 / -1;
+
+  flex-direction: row !important;
+  align-items: center;
+
+  padding: 12px 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  cursor: pointer;
+}
+
+
+.barcode-print-checkbox input {
+  width: auto;
+
+  margin: 0;
+}
+
+
+.barcode-print-preview-info {
+  margin-top: 16px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  color: #475569;
+
+  font-size: 0.82rem;
+
+  word-break: break-all;
+}
+
+
+.barcode-print-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 20px;
+}
+
+
+@media (max-width: 600px) {
+
+  .barcode-print-modal {
+    padding: 10px;
+  }
+
+
+  .barcode-print-dialog {
+    max-height:
+      calc(100vh - 20px);
+
+    border-radius:
+      13px;
+  }
+
+
+  .barcode-print-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .barcode-print-checkbox {
+    grid-column:
+      auto;
+  }
+
+
+  .barcode-print-actions {
+    flex-direction:
+      column-reverse;
+  }
+
+
+  .barcode-print-actions .btn {
+    width:
+      100%;
+  }
+}

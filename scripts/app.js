@@ -2986,6 +2986,10 @@
   // PRODUCT BARCODE PRINTING
   // =========================================================
 
+  const BARCODE_PRINT_SETTINGS_KEY =
+    "perowba_barcode_print_settings";
+
+
   function loadBarcodePrintLibrary() {
 
     if (
@@ -3093,7 +3097,136 @@
   }
 
 
-  async function printProductBarcode(
+  function getSavedBarcodePrintSettings() {
+
+    const defaults = {
+      size:
+        "50x30",
+
+      pageMode:
+        "mo5812",
+
+      showPrice:
+        true
+    };
+
+
+    try {
+
+      const saved =
+        JSON.parse(
+          localStorage.getItem(
+            BARCODE_PRINT_SETTINGS_KEY
+          ) ||
+          "{}"
+        );
+
+
+      return {
+        ...defaults,
+        ...saved
+      };
+
+    } catch (error) {
+
+      return defaults;
+    }
+  }
+
+
+  function saveBarcodePrintSettings(
+    settings
+  ) {
+
+    try {
+
+      localStorage.setItem(
+        BARCODE_PRINT_SETTINGS_KEY,
+        JSON.stringify({
+          size:
+            settings.size,
+
+          pageMode:
+            settings.pageMode,
+
+          showPrice:
+            settings.showPrice
+        })
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "Não foi possível salvar preferências de etiqueta.",
+        error
+      );
+    }
+  }
+
+
+  function getBarcodeLabelDimensions(
+    size
+  ) {
+
+    const dimensions = {
+      "40x25": {
+        width:
+          40,
+
+        height:
+          25,
+
+        barcodeHeight:
+          8
+      },
+
+      "50x30": {
+        width:
+          50,
+
+        height:
+          30,
+
+        barcodeHeight:
+          10
+      },
+
+      "60x40": {
+        width:
+          60,
+
+        height:
+          40,
+
+        barcodeHeight:
+          14
+      }
+    };
+
+
+    return (
+      dimensions[size] ||
+      dimensions["50x30"]
+    );
+  }
+
+
+  function closeBarcodePrintDialog() {
+
+    const modal =
+      $("#barcode-print-modal");
+
+
+    if (
+      modal
+    ) {
+
+      modal.remove();
+    }
+  }
+
+
+  function openBarcodePrintDialog(
     product
   ) {
 
@@ -3122,68 +3255,335 @@
     }
 
 
-    const answer =
-      window.prompt(
-        `Quantas etiquetas deseja imprimir para "${product.name}"?`,
-        "1"
+    closeBarcodePrintDialog();
+
+
+    const settings =
+      getSavedBarcodePrintSettings();
+
+
+    const modal =
+      document.createElement(
+        "div"
       );
 
 
-    if (
-      answer === null
-    ) {
-
-      return;
-    }
+    modal.id =
+      "barcode-print-modal";
 
 
-    const quantity =
-      Number(
-        String(answer)
-          .trim()
+    modal.className =
+      "barcode-print-modal";
+
+
+    modal.innerHTML =
+      `
+        <div class="barcode-print-dialog">
+
+          <div class="barcode-print-header">
+
+            <div>
+
+              <h3>
+                🖨️ Imprimir etiquetas
+              </h3>
+
+              <p>
+                ${escapeBarcodeLabelHTML(product.name)}
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              class="barcode-print-close"
+              aria-label="Fechar">
+              ×
+            </button>
+
+          </div>
+
+
+          <form id="barcode-print-form">
+
+            <div class="barcode-print-grid">
+
+              <label>
+
+                Quantidade
+
+                <input
+                  id="barcode-print-quantity"
+                  type="number"
+                  min="1"
+                  max="500"
+                  step="1"
+                  value="1"
+                  required>
+
+              </label>
+
+
+              <label>
+
+                Tamanho da etiqueta
+
+                <select
+                  id="barcode-print-size">
+
+                  <option
+                    value="40x25"
+                    ${settings.size === "40x25" ? "selected" : ""}>
+                    40 × 25 mm
+                  </option>
+
+                  <option
+                    value="50x30"
+                    ${settings.size === "50x30" ? "selected" : ""}>
+                    50 × 30 mm
+                  </option>
+
+                  <option
+                    value="60x40"
+                    ${settings.size === "60x40" ? "selected" : ""}>
+                    60 × 40 mm
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label>
+
+                Tipo de impressão
+
+                <select
+                  id="barcode-print-page-mode">
+
+                  <option
+                    value="mo5812"
+                    ${settings.pageMode === "mo5812" ? "selected" : ""}>
+                    Átomo MO-5812 — Bobina 58 mm
+                  </option>
+
+                  <option
+                    value="a4"
+                    ${settings.pageMode === "a4" ? "selected" : ""}>
+                    Folha A4 — várias etiquetas
+                  </option>
+
+                  <option
+                    value="thermal"
+                    ${settings.pageMode === "thermal" ? "selected" : ""}>
+                    Etiqueta adesiva — configurar depois
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label class="barcode-print-checkbox">
+
+                <input
+                  id="barcode-print-show-price"
+                  type="checkbox"
+                  ${settings.showPrice ? "checked" : ""}>
+
+                <span>
+                  Mostrar preço na etiqueta
+                </span>
+
+              </label>
+
+            </div>
+
+
+            <div class="barcode-print-preview-info">
+
+              <strong>
+                Código:
+              </strong>
+
+              ${escapeBarcodeLabelHTML(barcode)}
+
+            </div>
+
+
+            <div class="barcode-print-actions">
+
+              <button
+                type="button"
+                class="btn secondary"
+                id="barcode-print-cancel">
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                class="btn primary">
+                🖨️ Imprimir
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+      `;
+
+
+    document.body.appendChild(
+      modal
+    );
+
+
+    const quantityInput =
+      $("#barcode-print-quantity");
+
+
+    setTimeout(
+      () => {
+
+        quantityInput?.focus();
+
+        quantityInput?.select();
+
+      },
+      50
+    );
+
+
+    $(".barcode-print-close")
+      ?.addEventListener(
+        "click",
+        closeBarcodePrintDialog
       );
 
 
-    if (
-      !Number.isInteger(quantity) ||
-      quantity < 1
-    ) {
-
-      return toast(
-        "Digite uma quantidade inteira maior que zero."
-      );
-    }
-
-
-    if (
-      quantity > 500
-    ) {
-
-      return toast(
-        "O máximo é 500 etiquetas por impressão."
-      );
-    }
-
-
-    // Abre a janela imediatamente durante o clique.
-    // Isso reduz o risco de o navegador bloquear o popup.
-
-    const printWindow =
-      window.open(
-        "",
-        "_blank",
-        "width=900,height=700"
+    $("#barcode-print-cancel")
+      ?.addEventListener(
+        "click",
+        closeBarcodePrintDialog
       );
 
 
-    if (
-      !printWindow
-    ) {
+    modal.addEventListener(
+      "click",
+      event => {
 
-      return toast(
-        "O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente."
+        if (
+          event.target ===
+          modal
+        ) {
+
+          closeBarcodePrintDialog();
+        }
+      }
+    );
+
+
+    $("#barcode-print-form")
+      ?.addEventListener(
+        "submit",
+        event => {
+
+          event.preventDefault();
+
+
+          const quantity =
+            Number(
+              $("#barcode-print-quantity")
+                .value
+            );
+
+
+          const size =
+            $("#barcode-print-size")
+              .value;
+
+
+          const pageMode =
+            $("#barcode-print-page-mode")
+              .value;
+
+
+          const showPrice =
+            $("#barcode-print-show-price")
+              .checked;
+
+
+          if (
+            !Number.isInteger(quantity) ||
+            quantity < 1 ||
+            quantity > 500
+          ) {
+
+            return toast(
+              "A quantidade deve ser entre 1 e 500."
+            );
+          }
+
+
+          const printSettings = {
+            quantity,
+            size,
+            pageMode,
+            showPrice
+          };
+
+
+          saveBarcodePrintSettings(
+            printSettings
+          );
+
+
+          // O popup é aberto diretamente durante
+          // o clique em Imprimir para evitar bloqueio.
+
+          const printWindow =
+            window.open(
+              "",
+              "_blank",
+              "width=1000,height=750"
+            );
+
+
+          if (
+            !printWindow
+          ) {
+
+            return toast(
+              "O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente."
+            );
+          }
+
+
+          closeBarcodePrintDialog();
+
+
+          executeProductBarcodePrint(
+            product,
+            printSettings,
+            printWindow
+          );
+        }
       );
-    }
+  }
+
+
+  async function executeProductBarcodePrint(
+    product,
+    settings,
+    printWindow
+  ) {
+
+    const barcode =
+      String(
+        product.barcode ||
+        ""
+      ).trim();
 
 
     printWindow.document.write(
@@ -3194,6 +3594,7 @@
           <meta charset="UTF-8">
           <title>Preparando etiquetas...</title>
         </head>
+
         <body
           style="
             font-family:Arial,sans-serif;
@@ -3214,8 +3615,11 @@
       await loadBarcodePrintLibrary();
 
 
-      // Criamos o SVG na página principal e depois
-      // copiamos o resultado para a janela de impressão.
+      const dimensions =
+        getBarcodeLabelDimensions(
+          settings.size
+        );
+
 
       const barcodeSVG =
         document.createElementNS(
@@ -3235,7 +3639,7 @@
             2,
 
           height:
-            52,
+            55,
 
           displayValue:
             false,
@@ -3297,11 +3701,21 @@
         );
 
 
+      const priceMarkup =
+        settings.showPrice
+          ? `
+              <div class="label-price">
+                ${safePrice}
+              </div>
+            `
+          : "";
+
+
       const labels =
         Array.from(
           {
             length:
-              quantity
+              settings.quantity
           },
           () => `
             <div class="barcode-label">
@@ -3314,9 +3728,7 @@
                 ${safeProduct}
               </div>
 
-              <div class="label-price">
-                ${safePrice}
-              </div>
+              ${priceMarkup}
 
               <div class="label-barcode">
                 ${barcodeMarkup}
@@ -3333,6 +3745,232 @@
         );
 
 
+      const thermal =
+        settings.pageMode ===
+        "thermal";
+
+
+      const mo5812 =
+        settings.pageMode ===
+        "mo5812";
+
+
+      const bodyDisplay =
+        thermal || mo5812
+          ? "block"
+          : "grid";
+
+
+      const gridColumns =
+        thermal || mo5812
+          ? ""
+          : `
+              grid-template-columns:
+                repeat(
+                  auto-fill,
+                  ${dimensions.width}mm
+                );
+
+              grid-auto-rows:
+                ${dimensions.height}mm;
+            `;
+
+
+      const thermalLabelRules =
+        thermal
+          ? `
+              .barcode-label {
+                margin: 0 !important;
+
+                page-break-after:
+                  always;
+
+                break-after:
+                  page;
+              }
+
+              .barcode-label:last-child {
+                page-break-after:
+                  auto;
+
+                break-after:
+                  auto;
+              }
+            `
+          : "";
+
+
+      // MO5812 PRINT RULES
+
+      const mo5812Rules =
+        mo5812
+          ? `
+              body {
+                width: 58mm !important;
+                max-width: 58mm !important;
+
+                margin: 0 !important;
+                padding: 0 !important;
+
+                overflow: visible !important;
+              }
+
+
+              .barcode-label {
+                width: 48mm !important;
+                height: auto !important;
+                min-height: 30mm;
+
+                margin:
+                  0 auto 2mm auto !important;
+
+                padding:
+                  2mm 1.5mm !important;
+
+                border: none !important;
+
+                page-break-after:
+                  auto !important;
+
+                break-after:
+                  auto !important;
+              }
+
+
+              .label-company {
+                font-size:
+                  7pt !important;
+              }
+
+
+              .label-product {
+                font-size:
+                  8pt !important;
+
+                white-space:
+                  normal !important;
+
+                overflow:
+                  visible !important;
+
+                text-overflow:
+                  clip !important;
+              }
+
+
+              .label-price {
+                font-size:
+                  13pt !important;
+
+                margin:
+                  1mm 0 !important;
+              }
+
+
+              .label-barcode {
+                width:
+                  46mm !important;
+
+                max-width:
+                  46mm !important;
+              }
+
+
+              .label-barcode svg {
+                width:
+                  46mm !important;
+
+                max-width:
+                  46mm !important;
+
+                height:
+                  13mm !important;
+              }
+
+
+              .label-code {
+                font-size:
+                  7pt !important;
+
+                letter-spacing:
+                  0.2px !important;
+              }
+
+
+              .barcode-label:not(:last-child)::after {
+                content: "";
+
+                display:
+                  block;
+
+                width:
+                  42mm;
+
+                margin-top:
+                  2mm;
+
+                border-bottom:
+                  0.2mm dashed
+                  #999;
+              }
+            `
+          : "";
+
+      const pageRule =
+        mo5812
+          ? `
+              @page {
+                margin: 0;
+              }
+            `
+          : thermal
+            ? `
+                @page {
+                  size:
+                    ${dimensions.width}mm
+                    ${dimensions.height}mm;
+
+                  margin: 0;
+                }
+              `
+            : `
+                @page {
+                  size: A4;
+                  margin: 4mm;
+                }
+              `;
+
+
+      const documentPadding =
+        thermal || mo5812
+          ? "0"
+          : "0";
+
+
+      const documentGap =
+        thermal || mo5812
+          ? "0"
+          : "2mm";
+
+
+      const productFont =
+        dimensions.width <= 40
+          ? "7pt"
+          : "8pt";
+
+
+      const priceFont =
+        dimensions.width <= 40
+          ? "10pt"
+          : "12pt";
+
+
+      const codeFont =
+        dimensions.width <= 40
+          ? "5.8pt"
+          : "6.5pt";
+
+
       const printHTML =
         `
           <!DOCTYPE html>
@@ -3347,31 +3985,41 @@
               Etiquetas - ${safeProduct}
             </title>
 
+
             <style>
 
               * {
-                box-sizing: border-box;
+                box-sizing:
+                  border-box;
               }
 
 
               html,
               body {
                 margin: 0;
-                padding: 0;
+
+                padding:
+                  ${documentPadding};
+
+                background:
+                  #fff;
+
+                color:
+                  #000;
               }
 
 
               body {
-                display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
-                gap: 3mm;
+                display:
+                  ${bodyDisplay};
 
-                padding: 4mm;
+                ${gridColumns}
 
-                background: white;
+                gap:
+                  ${documentGap};
 
-                color: #000;
+                align-content:
+                  start;
 
                 font-family:
                   Arial,
@@ -3381,27 +4029,39 @@
 
 
               .barcode-label {
-                width: 50mm;
-                height: 30mm;
+                width:
+                  ${dimensions.width}mm;
 
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
+                height:
+                  ${dimensions.height}mm;
 
-                overflow: hidden;
+                display:
+                  flex;
 
-                padding: 2mm;
+                flex-direction:
+                  column;
 
-                border:
-                  1px dashed
-                  #bcbcbc;
+                align-items:
+                  center;
+
+                justify-content:
+                  center;
+
+                overflow:
+                  hidden;
+
+                padding:
+                  1.8mm;
 
                 background:
                   #fff;
 
                 text-align:
                   center;
+
+                border:
+                  0.2mm dashed
+                  #c7c7c7;
 
                 break-inside:
                   avoid;
@@ -3412,94 +4072,147 @@
 
 
               .label-company {
-                width: 100%;
+                width:
+                  100%;
 
-                overflow: hidden;
+                overflow:
+                  hidden;
 
-                margin-bottom: 0.5mm;
+                margin-bottom:
+                  0.4mm;
 
-                font-size: 7pt;
-                font-weight: 700;
+                font-size:
+                  6.5pt;
 
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                font-weight:
+                  700;
+
+                text-overflow:
+                  ellipsis;
+
+                white-space:
+                  nowrap;
               }
 
 
               .label-product {
-                width: 100%;
+                width:
+                  100%;
 
-                overflow: hidden;
+                overflow:
+                  hidden;
 
-                font-size: 8pt;
-                font-weight: 700;
+                font-size:
+                  ${productFont};
 
-                line-height: 1.1;
+                font-weight:
+                  700;
 
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                line-height:
+                  1.05;
+
+                text-overflow:
+                  ellipsis;
+
+                white-space:
+                  nowrap;
               }
 
 
               .label-price {
                 margin:
-                  0.8mm 0;
+                  0.6mm 0;
 
-                font-size: 12pt;
-                font-weight: 800;
+                font-size:
+                  ${priceFont};
+
+                font-weight:
+                  800;
+
+                line-height:
+                  1;
               }
 
 
               .label-barcode {
-                width: 100%;
+                width:
+                  100%;
 
-                display: flex;
-                justify-content: center;
+                display:
+                  flex;
 
-                overflow: hidden;
+                align-items:
+                  center;
+
+                justify-content:
+                  center;
+
+                overflow:
+                  hidden;
+
+                margin-top:
+                  ${settings.showPrice ? "0" : "1mm"};
               }
 
 
               .label-barcode svg {
-                width: 43mm;
-                max-width: 100%;
+                width:
+                  calc(
+                    ${dimensions.width}mm
+                    - 6mm
+                  );
 
-                height: 11mm;
+                max-width:
+                  100%;
+
+                height:
+                  ${dimensions.barcodeHeight}mm;
               }
 
 
               .label-code {
-                margin-top: 0.4mm;
+                max-width:
+                  100%;
+
+                overflow:
+                  hidden;
+
+                margin-top:
+                  0.3mm;
 
                 font-family:
                   "Courier New",
                   monospace;
 
-                font-size: 6.5pt;
+                font-size:
+                  ${codeFont};
 
-                letter-spacing: 0.4px;
+                letter-spacing:
+                  0.3px;
+
+                text-overflow:
+                  ellipsis;
+
+                white-space:
+                  nowrap;
               }
+
+
+              ${thermalLabelRules}
+
+              ${mo5812Rules}
 
 
               @media print {
 
-                body {
-                  padding: 0;
-                  gap: 2mm;
-                }
-
-
                 .barcode-label {
                   border:
-                    0.2mm solid
-                    #ddd;
+                    none;
                 }
               }
 
 
-              @page {
-                margin: 4mm;
-              }
+              ${pageRule}
 
             </style>
 
@@ -3535,7 +4248,7 @@
           printWindow.print();
 
         },
-        350
+        400
       );
 
 
@@ -3553,15 +4266,25 @@
 
       } catch (closeError) {
 
-        // Ignora falha ao fechar popup.
+        // Ignora erro ao fechar popup.
       }
 
 
       toast(
         error.message ||
-        "Não foi possível gerar a etiqueta."
+        "Não foi possível gerar as etiquetas."
       );
     }
+  }
+
+
+  function printProductBarcode(
+    product
+  ) {
+
+    openBarcodePrintDialog(
+      product
+    );
   }
 
   function bindProductTableActions() {
