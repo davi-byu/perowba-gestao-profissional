@@ -1563,3 +1563,133 @@ tr:last-child td {
   }
 
 }
+/* ===== PDV CAMERA SCANNER ===== */
+
+.pdv-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.pdv-search-row #pdv-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.camera-scan-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.camera-scanner-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.78);
+}
+
+.camera-scanner-modal.hidden {
+  display: none;
+}
+
+.camera-scanner-card {
+  width: min(520px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.camera-scanner-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.camera-scanner-header h3 {
+  margin: 0 0 4px;
+}
+
+.camera-scanner-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.camera-close-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.camera-reader {
+  width: 100%;
+  min-height: 290px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #0f172a;
+}
+
+.camera-placeholder {
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.camera-placeholder span {
+  font-size: 3rem;
+}
+
+.camera-placeholder small {
+  max-width: 320px;
+  opacity: 0.7;
+}
+
+.camera-cancel-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+
+@media (max-width: 700px) {
+  .pdv-search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .camera-scan-btn {
+    width: 100%;
+  }
+
+  .camera-scanner-modal {
+    padding: 10px;
+  }
+
+  .camera-scanner-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .camera-reader,
+  .camera-placeholder {
+    min-height: 260px;
+  }
+}

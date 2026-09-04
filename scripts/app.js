@@ -323,13 +323,73 @@
     $("#content").innerHTML = `
       <div class="pdv-layout">
         <section>
-          <div class="section-actions">
-            <input
-              id="pdv-search"
-              type="search"
-              autocomplete="off"
-              inputmode="search"
-              placeholder="Leia o código de barras ou busque por nome / SKU">
+          <div class="section-actions pdv-section-actions">
+            <div class="pdv-search-row">
+
+              <input
+                id="pdv-search"
+                type="search"
+                autocomplete="off"
+                inputmode="search"
+                placeholder="Leia o código de barras ou busque por nome / SKU">
+
+              <button
+                id="open-camera-scanner"
+                type="button"
+                class="secondary-btn camera-scan-btn">
+                📷 Usar câmera
+              </button>
+
+            </div>
+          </div>
+
+          <div
+            id="camera-scanner-modal"
+            class="camera-scanner-modal hidden"
+            aria-hidden="true">
+
+            <div class="camera-scanner-card">
+
+              <div class="camera-scanner-header">
+
+                <div>
+                  <h3>Ler código de barras</h3>
+                  <p>Aponte a câmera para o código do produto.</p>
+                </div>
+
+                <button
+                  id="close-camera-scanner"
+                  type="button"
+                  class="camera-close-btn"
+                  aria-label="Fechar câmera">
+                  ✕
+                </button>
+
+              </div>
+
+              <div
+                id="camera-reader"
+                class="camera-reader">
+
+                <div class="camera-placeholder">
+                  <span>📷</span>
+                  <strong>Câmera pronta para configuração</strong>
+                  <small>
+                    A leitura do código será conectada na próxima etapa.
+                  </small>
+                </div>
+
+              </div>
+
+              <button
+                id="cancel-camera-scanner"
+                type="button"
+                class="secondary-btn camera-cancel-btn">
+                Cancelar câmera
+              </button>
+
+            </div>
+
           </div>
           <div id="product-picker" class="product-picker">
             ${productTiles(activeProducts)}
@@ -666,6 +726,606 @@
 
 
     bindProductTiles();
+
+    // =======================================================
+    // JANELA CAMERA PDV
+    // =======================================================
+
+    const cameraModal =
+      $("#camera-scanner-modal");
+
+    const cameraReader =
+      $("#camera-reader");
+
+    const openCameraButton =
+      $("#open-camera-scanner");
+
+    const closeCameraButton =
+      $("#close-camera-scanner");
+
+    const cancelCameraButton =
+      $("#cancel-camera-scanner");
+
+    const cameraSearch =
+      $("#pdv-search");
+
+
+    let cameraScanner =
+      null;
+
+    let cameraScannerStarting =
+      false;
+
+    let cameraReadLocked =
+      false;
+
+    let lastCameraCode =
+      "";
+
+    let lastCameraReadAt =
+      0;
+
+
+    // =======================================================
+    // CARREGAR BIBLIOTECA DO LEITOR
+    // =======================================================
+
+    const loadCameraLibrary =
+      () => {
+
+        if (
+          window.Html5Qrcode
+        ) {
+          return Promise.resolve();
+        }
+
+
+        if (
+          window.__perowbaBarcodeLibraryPromise
+        ) {
+          return window.__perowbaBarcodeLibraryPromise;
+        }
+
+
+        window.__perowbaBarcodeLibraryPromise =
+          new Promise(
+            (
+              resolve,
+              reject
+            ) => {
+
+              const existingScript =
+                document.querySelector(
+                  'script[data-perowba-barcode-library="true"]'
+                );
+
+
+              if (
+                existingScript
+              ) {
+
+                if (
+                  window.Html5Qrcode
+                ) {
+                  resolve();
+                  return;
+                }
+
+
+                existingScript.addEventListener(
+                  "load",
+                  () => {
+                    resolve();
+                  },
+                  {
+                    once: true
+                  }
+                );
+
+
+                existingScript.addEventListener(
+                  "error",
+                  () => {
+
+                    window.__perowbaBarcodeLibraryPromise =
+                      null;
+
+                    reject(
+                      new Error(
+                        "Falha ao carregar biblioteca do leitor."
+                      )
+                    );
+                  },
+                  {
+                    once: true
+                  }
+                );
+
+
+                return;
+              }
+
+
+              const script =
+                document.createElement(
+                  "script"
+                );
+
+
+              script.src =
+                "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js";
+
+
+              script.integrity =
+                "sha512-r6rDA7W6ZeQhvl8S7yRVQUKVHdexq+GAlNkNNqVC7YyIV+NwqCTJe2hDWCiffTyRNOeGEzRRJ9ifvRm/HCzGYg==";
+
+
+              script.crossOrigin =
+                "anonymous";
+
+
+              script.referrerPolicy =
+                "no-referrer";
+
+
+              script.dataset.perowbaBarcodeLibrary =
+                "true";
+
+
+              script.addEventListener(
+                "load",
+                () => {
+
+                  if (
+                    window.Html5Qrcode
+                  ) {
+
+                    resolve();
+
+                  } else {
+
+                    window.__perowbaBarcodeLibraryPromise =
+                      null;
+
+                    reject(
+                      new Error(
+                        "Biblioteca carregada, mas Html5Qrcode não foi encontrado."
+                      )
+                    );
+                  }
+                }
+              );
+
+
+              script.addEventListener(
+                "error",
+                () => {
+
+                  window.__perowbaBarcodeLibraryPromise =
+                    null;
+
+                  reject(
+                    new Error(
+                      "Não foi possível carregar a biblioteca do leitor."
+                    )
+                  );
+                }
+              );
+
+
+              document.head.appendChild(
+                script
+              );
+            }
+          );
+
+
+        return window.__perowbaBarcodeLibraryPromise;
+      };
+
+
+    // =======================================================
+    // PARAR CAMERA
+    // =======================================================
+
+    const stopCameraScanner =
+      async () => {
+
+        const scanner =
+          cameraScanner;
+
+
+        cameraScanner =
+          null;
+
+
+        if (
+          !scanner
+        ) {
+          return;
+        }
+
+
+        try {
+
+          await scanner.stop();
+
+        } catch (error) {
+
+          // Pode acontecer se a câmera ainda estiver iniciando.
+
+        }
+
+
+        try {
+
+          await scanner.clear();
+
+        } catch (error) {
+
+          // Não precisamos interromper o fechamento por isso.
+
+        }
+      };
+
+
+    // =======================================================
+    // FECHAR CAMERA
+    // =======================================================
+
+    const closeCameraModal =
+      async () => {
+
+        cameraReadLocked =
+          true;
+
+
+        await stopCameraScanner();
+
+
+        cameraModal?.classList.add(
+          "hidden"
+        );
+
+
+        cameraModal?.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+
+        if (
+          cameraReader
+        ) {
+
+          cameraReader.innerHTML =
+            `
+              <div class="camera-placeholder">
+                <span>📷</span>
+                <strong>Câmera pronta</strong>
+                <small>
+                  Toque em Usar câmera para iniciar uma nova leitura.
+                </small>
+              </div>
+            `;
+        }
+
+
+        setTimeout(
+          () => {
+            $("#pdv-search")?.focus();
+          },
+          50
+        );
+      };
+
+
+    // =======================================================
+    // CODIGO RECONHECIDO
+    // =======================================================
+
+    const handleCameraBarcode =
+      async decodedText => {
+
+        if (
+          cameraReadLocked
+        ) {
+          return;
+        }
+
+
+        const code =
+          String(
+            decodedText ||
+            ""
+          ).trim();
+
+
+        if (
+          !code
+        ) {
+          return;
+        }
+
+
+        const now =
+          Date.now();
+
+
+        // Impede dezenas de mensagens iguais enquanto
+        // a câmera continua olhando para o mesmo código.
+        if (
+          code === lastCameraCode &&
+          now - lastCameraReadAt < 1800
+        ) {
+          return;
+        }
+
+
+        lastCameraCode =
+          code;
+
+        lastCameraReadAt =
+          now;
+
+
+        const product =
+          findScannedProduct(
+            code
+          );
+
+
+        if (
+          !product
+        ) {
+
+          toast(
+            `Produto não encontrado: ${code}`
+          );
+
+          return;
+        }
+
+
+        // Bloqueia leituras repetidas assim que encontramos
+        // um produto válido.
+        cameraReadLocked =
+          true;
+
+
+        await closeCameraModal();
+
+
+        addScannedProduct(
+          product
+        );
+      };
+
+
+    // =======================================================
+    // INICIAR CAMERA
+    // =======================================================
+
+    const startCameraScanner =
+      async () => {
+
+        if (
+          cameraScannerStarting ||
+          cameraScanner
+        ) {
+          return;
+        }
+
+
+        cameraScannerStarting =
+          true;
+
+        cameraReadLocked =
+          false;
+
+        lastCameraCode =
+          "";
+
+        lastCameraReadAt =
+          0;
+
+
+        cameraSearch?.blur();
+
+
+        cameraModal?.classList.remove(
+          "hidden"
+        );
+
+
+        cameraModal?.setAttribute(
+          "aria-hidden",
+          "false"
+        );
+
+
+        if (
+          cameraReader
+        ) {
+
+          cameraReader.innerHTML =
+            `
+              <div class="camera-placeholder">
+                <span>📷</span>
+                <strong>Abrindo câmera...</strong>
+                <small>
+                  Permita o acesso à câmera quando o navegador solicitar.
+                </small>
+              </div>
+            `;
+        }
+
+
+        try {
+
+          await loadCameraLibrary();
+
+
+          if (
+            !window.Html5Qrcode
+          ) {
+
+            throw new Error(
+              "Html5Qrcode indisponível."
+            );
+          }
+
+
+          if (
+            cameraReader
+          ) {
+            cameraReader.innerHTML =
+              "";
+          }
+
+
+          const scanner =
+            new window.Html5Qrcode(
+              "camera-reader"
+            );
+
+
+          cameraScanner =
+            scanner;
+
+
+          await scanner.start(
+
+            {
+              facingMode:
+                "environment"
+            },
+
+            {
+              fps: 10
+            },
+
+            decodedText => {
+
+              handleCameraBarcode(
+                decodedText
+              );
+
+            },
+
+            () => {
+
+              // Falhas normais de leitura de cada quadro
+              // são ignoradas enquanto procuramos o código.
+
+            }
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "Erro ao abrir câmera:",
+            error
+          );
+
+
+          const failedScanner =
+            cameraScanner;
+
+
+          cameraScanner =
+            null;
+
+
+          if (
+            failedScanner
+          ) {
+
+            try {
+
+              await failedScanner.clear();
+
+            } catch (clearError) {
+
+              // Ignora falha de limpeza.
+
+            }
+          }
+
+
+          if (
+            cameraReader
+          ) {
+
+            cameraReader.innerHTML =
+              `
+                <div class="camera-placeholder">
+                  <span>⚠️</span>
+                  <strong>Não foi possível abrir a câmera</strong>
+                  <small>
+                    Verifique a permissão da câmera e tente novamente.
+                    No celular, use o endereço HTTPS do GitHub Pages.
+                  </small>
+                </div>
+              `;
+          }
+
+
+          toast(
+            "Não foi possível acessar a câmera."
+          );
+
+        } finally {
+
+          cameraScannerStarting =
+            false;
+
+        }
+      };
+
+
+    // =======================================================
+    // EVENTOS DA CAMERA
+    // =======================================================
+
+    openCameraButton?.addEventListener(
+      "click",
+      startCameraScanner
+    );
+
+
+    closeCameraButton?.addEventListener(
+      "click",
+      () => {
+        closeCameraModal();
+      }
+    );
+
+
+    cancelCameraButton?.addEventListener(
+      "click",
+      () => {
+        closeCameraModal();
+      }
+    );
+
+
+    cameraModal?.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target ===
+          cameraModal
+        ) {
+
+          closeCameraModal();
+
+        }
+      }
+    );
+
     bindCartActions();
 
 
