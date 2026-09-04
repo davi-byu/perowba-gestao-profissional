@@ -1863,3 +1863,44 @@ tr:last-child td {
     display: none;
   }
 }
+
+/* ===== OCULTAR ATALHOS PDV NO CELULAR ===== */
+
+/* Celulares e telas menores */
+@media (max-width: 900px) {
+  .pdv-shortcuts-hint {
+    display: none !important;
+  }
+}
+
+/* Dispositivos predominantemente por toque */
+@media (hover: none) and (pointer: coarse) {
+  .pdv-shortcuts-hint {
+    display: none !important;
+  }
+}
+
+/* ===== CAMERA SOMENTE MOBILE ===== */
+
+/* No computador, a câmera não aparece */
+.camera-scan-btn {
+  display: none !important;
+}
+
+/* Em celular / tablet por toque, a câmera aparece */
+@media (max-width: 900px) {
+  .camera-scan-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Reforço para dispositivos com tela de toque */
+@media (hover: none) and (pointer: coarse) {
+  .camera-scan-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
