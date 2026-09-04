@@ -528,60 +528,129 @@
                 pdvAudioContext.currentTime;
 
 
-              const oscillator =
+              // Tom principal:
+              // bip curto, agudo e seco como leitor de caixa.
+
+              const oscillator1 =
                 pdvAudioContext.createOscillator();
 
 
-              const gain =
+              const gain1 =
                 pdvAudioContext.createGain();
 
 
-              oscillator.type =
-                "sine";
+              oscillator1.type =
+                "square";
 
 
-              oscillator.frequency.setValueAtTime(
-                880,
+              oscillator1.frequency.setValueAtTime(
+                2350,
                 now
               );
 
 
-              gain.gain.setValueAtTime(
+              gain1.gain.setValueAtTime(
                 0.0001,
                 now
               );
 
 
-              gain.gain.exponentialRampToValueAtTime(
-                0.16,
-                now + 0.01
+              gain1.gain.exponentialRampToValueAtTime(
+                0.11,
+                now + 0.004
               );
 
 
-              gain.gain.exponentialRampToValueAtTime(
+              gain1.gain.setValueAtTime(
+                0.11,
+                now + 0.055
+              );
+
+
+              gain1.gain.exponentialRampToValueAtTime(
                 0.0001,
-                now + 0.11
+                now + 0.095
               );
 
 
-              oscillator.connect(
-                gain
+              oscillator1.connect(
+                gain1
               );
 
 
-              gain.connect(
+              gain1.connect(
                 pdvAudioContext.destination
               );
 
 
-              oscillator.start(
+              // Segundo tom mais fraco para dar
+              // aquele som metálico típico do scanner.
+
+              const oscillator2 =
+                pdvAudioContext.createOscillator();
+
+
+              const gain2 =
+                pdvAudioContext.createGain();
+
+
+              oscillator2.type =
+                "sine";
+
+
+              oscillator2.frequency.setValueAtTime(
+                3525,
                 now
               );
 
 
-              oscillator.stop(
-                now + 0.12
+              gain2.gain.setValueAtTime(
+                0.0001,
+                now
               );
+
+
+              gain2.gain.exponentialRampToValueAtTime(
+                0.035,
+                now + 0.004
+              );
+
+
+              gain2.gain.exponentialRampToValueAtTime(
+                0.0001,
+                now + 0.075
+              );
+
+
+              oscillator2.connect(
+                gain2
+              );
+
+
+              gain2.connect(
+                pdvAudioContext.destination
+              );
+
+
+              oscillator1.start(
+                now
+              );
+
+
+              oscillator2.start(
+                now
+              );
+
+
+              oscillator2.stop(
+                now + 0.08
+              );
+
+
+              oscillator1.stop(
+                now + 0.10
+              );
+
             };
 
 
@@ -607,12 +676,11 @@
 
         } catch (error) {
 
-          // O PDV continua funcionando mesmo se
-          // o navegador bloquear o som.
+          // Se o navegador bloquear o áudio,
+          // a venda continua funcionando normalmente.
 
         }
       };
-
 
     const unlockPdvAudio =
       () => {
