@@ -483,6 +483,315 @@
       };
 
 
+    // =======================================================
+    // PDV SCAN FEEDBACK
+    // Som + confirmação visual
+    // =======================================================
+
+    let pdvAudioContext =
+      null;
+
+    let pdvFeedbackTimer =
+      null;
+
+
+    const playScanBeep =
+      () => {
+
+        try {
+
+          const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+          if (
+            !AudioContextClass
+          ) {
+            return;
+          }
+
+
+          if (
+            !pdvAudioContext
+          ) {
+
+            pdvAudioContext =
+              new AudioContextClass();
+          }
+
+
+          const sound =
+            () => {
+
+              const now =
+                pdvAudioContext.currentTime;
+
+
+              const oscillator =
+                pdvAudioContext.createOscillator();
+
+
+              const gain =
+                pdvAudioContext.createGain();
+
+
+              oscillator.type =
+                "sine";
+
+
+              oscillator.frequency.setValueAtTime(
+                880,
+                now
+              );
+
+
+              gain.gain.setValueAtTime(
+                0.0001,
+                now
+              );
+
+
+              gain.gain.exponentialRampToValueAtTime(
+                0.16,
+                now + 0.01
+              );
+
+
+              gain.gain.exponentialRampToValueAtTime(
+                0.0001,
+                now + 0.11
+              );
+
+
+              oscillator.connect(
+                gain
+              );
+
+
+              gain.connect(
+                pdvAudioContext.destination
+              );
+
+
+              oscillator.start(
+                now
+              );
+
+
+              oscillator.stop(
+                now + 0.12
+              );
+            };
+
+
+          if (
+            pdvAudioContext.state ===
+            "suspended"
+          ) {
+
+            pdvAudioContext
+              .resume()
+              .then(
+                sound
+              )
+              .catch(
+                () => {}
+              );
+
+          } else {
+
+            sound();
+          }
+
+
+        } catch (error) {
+
+          // O PDV continua funcionando mesmo se
+          // o navegador bloquear o som.
+
+        }
+      };
+
+
+    const unlockPdvAudio =
+      () => {
+
+        try {
+
+          const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+
+          if (
+            !AudioContextClass
+          ) {
+            return;
+          }
+
+
+          if (
+            !pdvAudioContext
+          ) {
+
+            pdvAudioContext =
+              new AudioContextClass();
+          }
+
+
+          if (
+            pdvAudioContext.state ===
+            "suspended"
+          ) {
+
+            pdvAudioContext
+              .resume()
+              .catch(
+                () => {}
+              );
+          }
+
+
+          // Oscilador silencioso para liberar o áudio
+          // durante a interação direta do usuário.
+
+          const oscillator =
+            pdvAudioContext.createOscillator();
+
+
+          const gain =
+            pdvAudioContext.createGain();
+
+
+          gain.gain.setValueAtTime(
+            0.0001,
+            pdvAudioContext.currentTime
+          );
+
+
+          oscillator.connect(
+            gain
+          );
+
+
+          gain.connect(
+            pdvAudioContext.destination
+          );
+
+
+          oscillator.start();
+
+
+          oscillator.stop(
+            pdvAudioContext.currentTime +
+            0.01
+          );
+
+
+        } catch (error) {
+
+          // Não interfere no funcionamento do PDV.
+
+        }
+      };
+
+    const showScanSuccess =
+      product => {
+
+        clearTimeout(
+          pdvFeedbackTimer
+        );
+
+
+        document
+          .querySelector(
+            "#pdv-scan-feedback"
+          )
+          ?.remove();
+
+
+        const feedback =
+          document.createElement(
+            "div"
+          );
+
+
+        feedback.id =
+          "pdv-scan-feedback";
+
+
+        feedback.className =
+          "pdv-scan-feedback";
+
+
+        feedback.innerHTML =
+          `
+            <div class="pdv-scan-feedback-icon">
+              ✓
+            </div>
+
+            <div class="pdv-scan-feedback-text">
+              <strong></strong>
+              <span>Adicionado ao carrinho</span>
+            </div>
+          `;
+
+
+        const productNameElement =
+          feedback.querySelector(
+            ".pdv-scan-feedback-text strong"
+          );
+
+
+        if (
+          productNameElement
+        ) {
+
+          productNameElement.textContent =
+            String(
+              product.name ||
+              "Produto"
+            );
+        }
+
+
+        document.body.appendChild(
+          feedback
+        );
+
+
+        requestAnimationFrame(
+          () => {
+
+            feedback.classList.add(
+              "show"
+            );
+          }
+        );
+
+
+        pdvFeedbackTimer =
+          setTimeout(
+            () => {
+
+              feedback.classList.remove(
+                "show"
+              );
+
+
+              setTimeout(
+                () => {
+                  feedback.remove();
+                },
+                250
+              );
+
+            },
+            1100
+          );
+      };
+
     const addScannedProduct =
       product => {
 
@@ -568,6 +877,15 @@
 
 
         saveState();
+
+
+        // CONFIRMACAO DE LEITURA PDV
+
+        playScanBeep();
+
+        showScanSuccess(
+          product
+        );
 
 
         toast(
@@ -1291,7 +1609,12 @@
 
     openCameraButton?.addEventListener(
       "click",
-      startCameraScanner
+      () => {
+
+        unlockPdvAudio();
+
+        startCameraScanner();
+      }
     );
 
 

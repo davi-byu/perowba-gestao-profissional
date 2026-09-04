@@ -1693,3 +1693,111 @@ tr:last-child td {
     min-height: 260px;
   }
 }
+
+/* ===== PDV SCAN FEEDBACK ===== */
+
+.pdv-scan-feedback {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 12000;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-width: 280px;
+  max-width: calc(100vw - 30px);
+
+  padding: 13px 18px;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 16px 40px
+    rgba(15, 23, 42, 0.22);
+
+  transform:
+    translate(-50%, -25px)
+    scale(0.96);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.pdv-scan-feedback.show {
+  transform:
+    translate(-50%, 0)
+    scale(1);
+
+  opacity: 1;
+}
+
+
+.pdv-scan-feedback-icon {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: #dcfce7;
+  color: #15803d;
+
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+
+.pdv-scan-feedback-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  min-width: 0;
+}
+
+
+.pdv-scan-feedback-text strong {
+  overflow: hidden;
+
+  color: #0f172a;
+
+  font-size: 0.96rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.pdv-scan-feedback-text span {
+  color: #64748b;
+
+  font-size: 0.82rem;
+}
+
+
+@media (max-width: 700px) {
+
+  .pdv-scan-feedback {
+    top: 12px;
+
+    width:
+      calc(100vw - 24px);
+
+    min-width: 0;
+  }
+}
