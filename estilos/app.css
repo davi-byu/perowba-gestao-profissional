@@ -1801,3 +1801,65 @@ tr:last-child td {
     min-width: 0;
   }
 }
+
+/* ===== PDV KEYBOARD SHORTCUTS ===== */
+
+.pdv-shortcuts-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+
+  margin:
+    8px 0
+    14px;
+
+  font-size: 0.8rem;
+
+  color: #64748b;
+}
+
+
+.pdv-shortcuts-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+
+.pdv-shortcuts-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 31px;
+
+  padding:
+    3px 6px;
+
+  border:
+    1px solid
+    #cbd5e1;
+
+  border-radius: 6px;
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  box-shadow:
+    0 1px 1px
+    rgba(15, 23, 42, 0.08);
+}
+
+
+@media (max-width: 700px) {
+
+  .pdv-shortcuts-hint {
+    display: none;
+  }
+}

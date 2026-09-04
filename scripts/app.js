@@ -391,6 +391,31 @@
             </div>
 
           </div>
+          <div
+            class="pdv-shortcuts-hint"
+            aria-label="Atalhos de teclado do PDV">
+
+            <span>
+              <kbd>F2</kbd>
+              Buscar
+            </span>
+
+            <span>
+              <kbd>F4</kbd>
+              Quantidade
+            </span>
+
+            <span>
+              <kbd>F8</kbd>
+              Cliente
+            </span>
+
+            <span>
+              <kbd>F10</kbd>
+              Finalizar
+            </span>
+
+          </div>
           <div id="product-picker" class="product-picker">
             ${productTiles(activeProducts)}
           </div>
@@ -1734,6 +1759,314 @@
       saveState();
       renderPDV();
     });
+
+    // =======================================================
+    // PDV KEYBOARD SHORTCUTS
+    // =======================================================
+
+    if (
+      window.__perowbaPdvShortcutHandler
+    ) {
+
+      document.removeEventListener(
+        "keydown",
+        window.__perowbaPdvShortcutHandler,
+        true
+      );
+    }
+
+
+    const pdvShortcutHandler =
+      event => {
+
+        if (
+          event.repeat
+        ) {
+          return;
+        }
+
+
+        if (
+          event.ctrlKey ||
+          event.metaKey
+        ) {
+          return;
+        }
+
+
+        const key =
+          event.key;
+
+
+        const functionShortcut =
+          [
+            "F2",
+            "F4",
+            "F8",
+            "F10"
+          ].includes(key);
+
+
+        if (
+          !functionShortcut
+        ) {
+          return;
+        }
+
+
+        // Só ativa os atalhos se o PDV estiver realmente
+        // aberto na tela.
+
+        const searchInput =
+          $("#pdv-search");
+
+        const finishButton =
+          $("#finish-sale");
+
+
+        if (
+          !searchInput ||
+          !finishButton
+        ) {
+          return;
+        }
+
+
+        // Enquanto a câmera estiver aberta,
+        // não executa atalhos do caixa.
+
+        const cameraModal =
+          $("#camera-scanner-modal");
+
+
+        if (
+          cameraModal &&
+          !cameraModal.classList.contains(
+            "hidden"
+          )
+        ) {
+          return;
+        }
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+
+        // ===================================================
+        // F2 - BUSCAR PRODUTO
+        // ===================================================
+
+        if (
+          key === "F2"
+        ) {
+
+          searchInput.focus();
+
+          searchInput.select();
+
+          return;
+        }
+
+
+        // ===================================================
+        // F8 - CLIENTE
+        // ===================================================
+
+        if (
+          key === "F8"
+        ) {
+
+          const customerSelect =
+            $("#sale-customer");
+
+
+          if (
+            !customerSelect
+          ) {
+            return;
+          }
+
+
+          customerSelect.focus();
+
+
+          // Navegadores modernos podem abrir
+          // o select diretamente.
+
+          if (
+            typeof customerSelect.showPicker ===
+            "function"
+          ) {
+
+            try {
+
+              customerSelect.showPicker();
+
+            } catch (error) {
+
+              // O foco já foi aplicado.
+            }
+          }
+
+
+          return;
+        }
+
+
+        // ===================================================
+        // F10 - FINALIZAR VENDA
+        // ===================================================
+
+        if (
+          key === "F10"
+        ) {
+
+          finishButton.click();
+
+          return;
+        }
+
+
+        // ===================================================
+        // F4 - QUANTIDADE DO ULTIMO PRODUTO
+        // ===================================================
+
+        if (
+          key === "F4"
+        ) {
+
+          if (
+            !state.cart.length
+          ) {
+
+            toast(
+              "Adicione um produto antes de alterar a quantidade."
+            );
+
+            return;
+          }
+
+
+          const lastItem =
+            state.cart[
+              state.cart.length - 1
+            ];
+
+
+          const resposta =
+            window.prompt(
+              `Quantidade de "${lastItem.name}"` +
+              `\nDigite 0 para remover o item:`,
+              String(
+                lastItem.qty
+              )
+            );
+
+
+          if (
+            resposta === null
+          ) {
+            return;
+          }
+
+
+          const quantity =
+            Number(
+              String(resposta)
+                .trim()
+            );
+
+
+          if (
+            !Number.isInteger(quantity) ||
+            quantity < 0
+          ) {
+
+            toast(
+              "Digite uma quantidade inteira válida."
+            );
+
+            return;
+          }
+
+
+          if (
+            quantity === 0
+          ) {
+
+            state.cart =
+              state.cart.filter(
+                item =>
+                  item.productId !==
+                  lastItem.productId
+              );
+
+
+            saveState();
+
+            renderPDV();
+
+
+            toast(
+              `${lastItem.name} removido do carrinho.`
+            );
+
+            return;
+          }
+
+
+          const product =
+            state.products.find(
+              item =>
+                item.id ===
+                lastItem.productId
+            );
+
+
+          if (
+            product &&
+            !state.settings.allowNegativeStock &&
+            quantity >
+              Number(product.stock)
+          ) {
+
+            toast(
+              `Estoque disponível: ${product.stock}.`
+            );
+
+            return;
+          }
+
+
+          lastItem.qty =
+            quantity;
+
+
+          saveState();
+
+          renderPDV();
+
+
+          toast(
+            `Quantidade de ${lastItem.name}: ${quantity}.`
+          );
+
+          return;
+        }
+      };
+
+
+    window.__perowbaPdvShortcutHandler =
+      pdvShortcutHandler;
+
+
+    document.addEventListener(
+      "keydown",
+      pdvShortcutHandler,
+      true
+    );
 
     $("#finish-sale").addEventListener("click", finishSale);
   }
