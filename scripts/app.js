@@ -482,7 +482,8 @@
         }
 
 
-        return (
+        // Primeiro procura pelo código principal do produto.
+        const directProduct =
           activeProducts.find(
             item =>
               String(
@@ -491,8 +492,70 @@
                 .trim()
                 .toLowerCase() ===
                 normalizedCode
-          ) ||
+          );
 
+
+        if (directProduct) {
+          return {
+            ...directProduct,
+            scannedSize: ""
+          };
+        }
+
+
+        // Depois procura pelo código de barras específico
+        // de cada tamanho do produto.
+        for (
+          const item
+          of activeProducts
+        ) {
+
+          const sizes =
+            Array.isArray(
+              item.sizes
+            )
+              ? item.sizes
+              : [];
+
+
+          const matchedSize =
+            sizes.find(
+              sizeItem =>
+                String(
+                  sizeItem.barcode || ""
+                )
+                  .trim()
+                  .toLowerCase() ===
+                  normalizedCode
+            );
+
+
+          if (matchedSize) {
+
+            return {
+              ...item,
+
+              scannedSize:
+                String(
+                  matchedSize.size || ""
+                ),
+
+              scannedSizeStock:
+                Number(
+                  matchedSize.stock || 0
+                ),
+
+              scannedBarcode:
+                String(
+                  matchedSize.barcode || ""
+                )
+            };
+          }
+        }
+
+
+        // Mantém também a pesquisa pelo SKU.
+        const skuProduct =
           activeProducts.find(
             item =>
               String(
@@ -501,12 +564,19 @@
                 .trim()
                 .toLowerCase() ===
                 normalizedCode
-          ) ||
+          );
 
-          null
-        );
+
+        if (skuProduct) {
+          return {
+            ...skuProduct,
+            scannedSize: ""
+          };
+        }
+
+
+        return null;
       };
-
 
     // =======================================================
     // PDV SCAN FEEDBACK
@@ -893,13 +963,49 @@
         }
 
 
+        const scannedSize =
+          String(
+            product.scannedSize || ""
+          ).trim();
+
+
+        const sizeData =
+          scannedSize
+            ? (
+                Array.isArray(
+                  product.sizes
+                )
+                  ? product.sizes.find(
+                      item =>
+                        String(
+                          item.size || ""
+                        ) ===
+                        scannedSize
+                    )
+                  : null
+              )
+            : null;
+
+
+        const availableStock =
+          scannedSize
+            ? Number(
+                sizeData?.stock || 0
+              )
+            : Number(
+                product.stock || 0
+              );
+
+
         if (
-          Number(product.stock) <= 0 &&
+          availableStock <= 0 &&
           !state.settings.allowNegativeStock
         ) {
 
           toast(
-            `${product.name} está sem estoque.`
+            scannedSize
+              ? `${product.name} Tam. ${scannedSize} está sem estoque.`
+              : `${product.name} está sem estoque.`
           );
 
           pdvSearch.value =
@@ -915,7 +1021,11 @@
           state.cart.find(
             item =>
               item.productId ===
-              product.id
+                product.id &&
+              String(
+                item.size || ""
+              ) ===
+                scannedSize
           );
 
 
@@ -927,11 +1037,13 @@
         if (
           !state.settings.allowNegativeStock &&
           currentQty >=
-            Number(product.stock)
+            availableStock
         ) {
 
           toast(
-            `Estoque máximo de ${product.name} atingido.`
+            scannedSize
+              ? `Estoque máximo de ${product.name} Tam. ${scannedSize} atingido.`
+              : `Estoque máximo de ${product.name} atingido.`
           );
 
           pdvSearch.value =
@@ -958,21 +1070,38 @@
               product.name,
 
             price:
-              Number(product.price),
+              Number(
+                product.price
+              ),
 
             cost:
-              Number(product.cost),
+              Number(
+                product.cost
+              ),
 
             qty:
-              1
+              1,
+
+            size:
+              scannedSize,
+
+            barcode:
+              scannedSize
+                ? String(
+                    sizeData?.barcode ||
+                    product.scannedBarcode ||
+                    ""
+                  )
+                : String(
+                    product.barcode ||
+                    ""
+                  )
           });
         }
 
 
         saveState();
 
-
-        // CONFIRMACAO DE LEITURA PDV
 
         playScanBeep();
 
@@ -982,7 +1111,9 @@
 
 
         toast(
-          `${product.name} adicionado ao carrinho.`
+          scannedSize
+            ? `${product.name} Tam. ${scannedSize} adicionado ao carrinho.`
+            : `${product.name} adicionado ao carrinho.`
         );
 
 
@@ -991,7 +1122,6 @@
 
         return true;
       };
-
 
     // =======================================================
     // ENTER DO LEITOR
@@ -2081,13 +2211,38 @@
   }
 
   function cartLine(item) {
+
+    const itemSize =
+      String(
+        item.size || ""
+      ).trim();
+
+    const sizeMarkup =
+      itemSize
+        ? `<small><strong>Tam. ${escapeHTML(itemSize)}</strong></small>`
+        : "";
+
     return `<div class="cart-line">
-      <div><strong>${escapeHTML(item.name)}</strong><small>${money(item.price)} cada</small></div>
-      <div class="cart-qty">
-        <button type="button" data-cart-dec="${item.productId}">−</button>
-        <span>${item.qty}</span>
-        <button type="button" data-cart-inc="${item.productId}">+</button>
+      <div>
+        <strong>${escapeHTML(item.name)}</strong>
+        ${sizeMarkup}
+        <small>${money(item.price)} cada</small>
       </div>
+
+      <div class="cart-qty">
+        <button
+          type="button"
+          data-cart-dec="${item.productId}"
+          data-cart-size="${escapeHTML(itemSize)}">−</button>
+
+        <span>${item.qty}</span>
+
+        <button
+          type="button"
+          data-cart-inc="${item.productId}"
+          data-cart-size="${escapeHTML(itemSize)}">+</button>
+      </div>
+
       <strong>${money(item.price * item.qty)}</strong>
     </div>`;
   }
@@ -2110,22 +2265,148 @@
   }
 
   function bindCartActions() {
-    $$("[data-cart-inc]").forEach(btn => btn.addEventListener("click", () => {
-      const item = state.cart.find(i => i.productId === btn.dataset.cartInc);
-      const product = state.products.find(p => p.id === item.productId);
-      if (!state.settings.allowNegativeStock && item.qty >= product.stock) return toast("Quantidade máxima disponível atingida.");
-      item.qty += 1;
-      saveState();
-      renderPDV();
-    }));
 
-    $$("[data-cart-dec]").forEach(btn => btn.addEventListener("click", () => {
-      const item = state.cart.find(i => i.productId === btn.dataset.cartDec);
-      item.qty -= 1;
-      state.cart = state.cart.filter(i => i.qty > 0);
-      saveState();
-      renderPDV();
-    }));
+    $$("[data-cart-inc]").forEach(
+      btn =>
+        btn.addEventListener(
+          "click",
+          () => {
+
+            const productId =
+              btn.dataset.cartInc;
+
+            const itemSize =
+              String(
+                btn.dataset.cartSize || ""
+              );
+
+            const item =
+              state.cart.find(
+                cartItem =>
+                  cartItem.productId ===
+                    productId &&
+                  String(
+                    cartItem.size || ""
+                  ) ===
+                    itemSize
+              );
+
+            if (!item) {
+              return;
+            }
+
+
+            const product =
+              state.products.find(
+                productItem =>
+                  productItem.id ===
+                  item.productId
+              );
+
+            if (!product) {
+              return toast(
+                "Produto não encontrado."
+              );
+            }
+
+
+            const sizeData =
+              itemSize &&
+              Array.isArray(
+                product.sizes
+              )
+                ? product.sizes.find(
+                    sizeItem =>
+                      String(
+                        sizeItem.size || ""
+                      ) ===
+                      itemSize
+                  )
+                : null;
+
+
+            const availableStock =
+              itemSize
+                ? Number(
+                    sizeData?.stock || 0
+                  )
+                : Number(
+                    product.stock || 0
+                  );
+
+
+            if (
+              !state.settings.allowNegativeStock &&
+              item.qty >=
+                availableStock
+            ) {
+
+              return toast(
+                itemSize
+                  ? `Quantidade máxima disponível do Tam. ${itemSize} atingida.`
+                  : "Quantidade máxima disponível atingida."
+              );
+            }
+
+
+            item.qty +=
+              1;
+
+            saveState();
+
+            renderPDV();
+          }
+        )
+    );
+
+
+    $$("[data-cart-dec]").forEach(
+      btn =>
+        btn.addEventListener(
+          "click",
+          () => {
+
+            const productId =
+              btn.dataset.cartDec;
+
+            const itemSize =
+              String(
+                btn.dataset.cartSize || ""
+              );
+
+            const item =
+              state.cart.find(
+                cartItem =>
+                  cartItem.productId ===
+                    productId &&
+                  String(
+                    cartItem.size || ""
+                  ) ===
+                    itemSize
+              );
+
+            if (!item) {
+              return;
+            }
+
+
+            item.qty -=
+              1;
+
+
+            state.cart =
+              state.cart.filter(
+                cartItem =>
+                  cartItem.qty > 0
+              );
+
+
+            saveState();
+
+            renderPDV();
+          }
+        )
+    );
   }
 
   async function finishSale() {
@@ -2236,7 +2517,10 @@
       const result = await window.firebaseService.finalizeSale({
         items: state.cart.map(item => ({
           productId: item.productId,
-          qty: item.qty
+          qty: item.qty,
+          size: String(
+            item.size || ""
+          ).trim()
         })),
         customerId: $("#sale-customer").value || null,
         payment: $("#sale-payment").value,
@@ -2440,6 +2724,32 @@
   }
 
 
+  function generateProductSizeBarcode(
+    productBarcode,
+    size
+  ) {
+
+    const base =
+      String(
+        productBarcode || ""
+      ).trim();
+
+    const productSize =
+      String(
+        size || ""
+      ).trim();
+
+    if (
+      !base ||
+      !productSize
+    ) {
+      return "";
+    }
+
+    return `${base}-${productSize}`;
+  }
+
+
   function bindProductBarcodeControls() {
 
     const manualMode =
@@ -2635,6 +2945,114 @@
               </div>
               <label>Categoria<input id="product-category"></label>
               <label>Marca<input id="product-brand"></label>
+
+              <div
+                style="
+                  grid-column:1 / -1;
+                  border:1px solid #dbe3ec;
+                  border-radius:10px;
+                  padding:12px 14px;
+                  background:#f8fafc;
+                ">
+
+                <label
+                  style="
+                    display:flex;
+                    align-items:flex-start;
+                    gap:10px;
+                    cursor:pointer;
+                    margin:0;
+                  ">
+
+                  <input
+                    id="product-use-sizes"
+                    type="checkbox"
+                    style="
+                      width:18px;
+                      height:18px;
+                      margin-top:2px;
+                      flex:0 0 auto;
+                    ">
+
+                  <span>
+                    <strong
+                      style="
+                        display:block;
+                        margin-bottom:3px;
+                      ">
+                      Controlar estoque por tamanhos
+                    </strong>
+
+                    <small class="muted">
+                      Ative para informar a quantidade disponível em cada tamanho.
+                    </small>
+                  </span>
+
+                </label>
+              </div>
+
+              <div
+                id="product-sizes-container"
+                class="hidden"
+                style="grid-column:1 / -1">
+
+                <span style="display:block;font-weight:600;margin-bottom:8px">
+                  Tamanhos e quantidades
+                </span>
+
+                <div
+                  id="product-sizes-grid"
+                  style="
+                    display:grid;
+                    grid-template-columns:repeat(8,minmax(52px,1fr));
+                    gap:8px;
+                    align-items:start;
+                  ">
+
+                  ${["26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47"].map(size => `
+                    <div
+                      style="
+                        border:1px solid #d9e2ec;
+                        border-radius:8px;
+                        background:#fff;
+                        padding:6px;
+                        text-align:center;
+                      ">
+
+                      <div
+                        style="
+                          font-size:12px;
+                          font-weight:700;
+                          margin-bottom:4px;
+                        ">
+                        ${size}
+                      </div>
+
+                      <input
+                        class="product-size-stock"
+                        data-size="${size}"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="0"
+                        style="
+                          width:100%;
+                          height:30px;
+                          border-radius:6px;
+                          text-align:center;
+                          padding:2px 4px;
+                          font-size:13px;
+                        ">
+                    </div>
+                  `).join("")}
+
+                </div>
+
+                <small class="muted">
+                  Informe a quantidade disponível de cada tamanho.
+                </small>
+              </div>
+
               <label>Unidade<select id="product-unit"><option>un</option><option>par</option><option>kg</option><option>cx</option></select></label>
               <label>Preço de custo*<input id="product-cost" type="number" min="0" step="0.01" required></label>
               <label>Preço de venda*<input id="product-price" type="number" min="0" step="0.01" required></label>
@@ -2675,6 +3093,71 @@
     `;
 
     $("#product-form").addEventListener("submit", saveProduct);
+
+    const useSizesInput =
+      $("#product-use-sizes");
+
+    const sizesContainer =
+      $("#product-sizes-container");
+
+    function calculateProductSizesStock() {
+      return $$(".product-size-stock")
+        .reduce(
+          (sum, input) =>
+            sum + Number(input.value || 0),
+          0
+        );
+    }
+
+    function updateProductSizesVisibility() {
+      const enabled =
+        Boolean(useSizesInput?.checked);
+
+      sizesContainer
+        ?.classList
+        .toggle(
+          "hidden",
+          !enabled
+        );
+
+      const stockInput =
+        $("#product-stock");
+
+      if (stockInput) {
+        stockInput.readOnly =
+          enabled;
+
+        if (enabled) {
+          stockInput.value =
+            calculateProductSizesStock();
+        }
+      }
+    }
+
+    useSizesInput
+      ?.addEventListener(
+        "change",
+        updateProductSizesVisibility
+      );
+
+    $$(".product-size-stock").forEach(
+      input =>
+        input.addEventListener(
+          "input",
+          () => {
+            if (
+              !useSizesInput?.checked
+            ) {
+              return;
+            }
+
+            $("#product-stock").value =
+              calculateProductSizesStock();
+          }
+        )
+    );
+
+    updateProductSizesVisibility();
 
     bindProductBarcodeControls();
 
@@ -2814,6 +3297,49 @@
       }
     }
 
+    const useSizes =
+      Boolean(
+        $("#product-use-sizes")?.checked
+      );
+
+    const sizes =
+      useSizes
+        ? Array.from(
+            document.querySelectorAll(
+              ".product-size-stock"
+            )
+          ).map(input => {
+
+            const size =
+              String(
+                input.dataset.size || ""
+              ).trim();
+
+            return {
+              size,
+              stock:
+                Number(
+                  input.value || 0
+                ),
+              barcode:
+                generateProductSizeBarcode(
+                  $("#product-barcode").value.trim(),
+                  size
+                )
+            };
+          })
+        : [];
+
+    const sizesStockTotal =
+      sizes.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.stock || 0
+          ),
+        0
+      );
+
     const payload = {
       name: $("#product-name").value.trim(),
       sku: $("#product-sku").value.trim(),
@@ -2823,7 +3349,14 @@
       unit: $("#product-unit").value,
       cost: Number($("#product-cost").value),
       price: Number($("#product-price").value),
-      stock: Number($("#product-stock").value || 0),
+      useSizes,
+      sizes,
+      stock:
+        useSizes
+          ? sizesStockTotal
+          : Number(
+              $("#product-stock").value || 0
+            ),
       minStock: Number($("#product-min-stock").value || 0),
       location: $("#product-location").value.trim(),
       active: $("#product-active").value === "true"
@@ -3308,20 +3841,127 @@
 
             <div class="barcode-print-grid">
 
-              <label>
+              ${
+                product.useSizes &&
+                Array.isArray(product.sizes) &&
+                product.sizes.length
+                  ? `
+                    <div
+                      style="
+                        grid-column:1 / -1;
+                      ">
 
-                Quantidade
+                      <div
+                        style="
+                          font-weight:700;
+                          margin-bottom:8px;
+                        ">
+                        Selecione as numerações
+                      </div>
 
-                <input
-                  id="barcode-print-quantity"
-                  type="number"
-                  min="1"
-                  max="500"
-                  step="1"
-                  value="1"
-                  required>
+                      <div
+                        id="barcode-print-sizes-list"
+                        style="
+                          display:grid;
+                          grid-template-columns:
+                            repeat(2,minmax(0,1fr));
+                          gap:6px;
+                        ">
 
-              </label>
+                        ${product.sizes
+                          .map(item => `
+                            <div
+                              style="
+                                display:grid;
+                                grid-template-columns:24px 1fr auto 58px;
+                                align-items:center;
+                                gap:5px;
+                                border:1px solid #dbe3ec;
+                                border-radius:6px;
+                                padding:5px 6px;
+                                background:#fff;
+                              ">
+
+                              <input
+                                type="checkbox"
+                                class="barcode-print-size-check"
+                                data-size="${escapeBarcodeLabelHTML(item.size)}"
+                                style="
+                                  width:16px;
+                                  height:16px;
+                                  margin:0;
+                                ">
+
+                              <strong
+                                style="
+                                  font-size:12px;
+                                  white-space:nowrap;
+                                ">
+                                Tam. ${escapeBarcodeLabelHTML(item.size)}
+                              </strong>
+
+                              <span
+                                style="
+                                  font-size:12px;
+                                  font-weight:700;
+                                  white-space:nowrap;
+                                  color:#334155;
+                                ">
+                                Est. ${Number(item.stock || 0)}
+                              </span>
+
+                              <input
+                                type="number"
+                                class="barcode-print-size-quantity"
+                                data-size="${escapeBarcodeLabelHTML(item.size)}"
+                                min="1"
+                                max="500"
+                                step="1"
+                                value="1"
+                                disabled
+                                style="
+                                  width:58px;
+                                  height:27px;
+                                  padding:2px 5px;
+                                  font-size:12px;
+                                  text-align:center;
+                                "
+                                aria-label="Quantidade de etiquetas do tamanho ${escapeBarcodeLabelHTML(item.size)}">
+
+                            </div>
+                          `)
+                          .join("")}
+
+                      </div>
+
+                      <small
+                        class="muted"
+                        style="
+                          display:block;
+                          margin-top:8px;
+                        ">
+                        Marque os tamanhos e informe quantas etiquetas deseja imprimir de cada um.
+                      </small>
+
+                    </div>
+                  `
+                  : `
+                    <label>
+
+                      Quantidade
+
+                      <input
+                        id="barcode-print-quantity"
+                        type="number"
+                        min="1"
+                        max="500"
+                        step="1"
+                        value="1"
+                        required>
+
+                    </label>
+                  `
+              }
 
 
               <label>
@@ -3469,6 +4109,46 @@
       );
 
 
+    $$(".barcode-print-size-check").forEach(
+      checkbox => {
+        checkbox.addEventListener(
+          "change",
+          () => {
+            const size =
+              String(
+                checkbox.dataset.size ||
+                ""
+              );
+
+            const quantityInput =
+              $$(".barcode-print-size-quantity")
+                .find(
+                  input =>
+                    String(
+                      input.dataset.size ||
+                      ""
+                    ) === size
+                );
+
+            if (
+              quantityInput
+            ) {
+              quantityInput.disabled =
+                !checkbox.checked;
+
+              if (
+                checkbox.checked
+              ) {
+                quantityInput.focus();
+                quantityInput.select();
+              }
+            }
+          }
+        );
+      }
+    );
+
+
     modal.addEventListener(
       "click",
       event => {
@@ -3492,13 +4172,6 @@
           event.preventDefault();
 
 
-          const quantity =
-            Number(
-              $("#barcode-print-quantity")
-                .value
-            );
-
-
           const size =
             $("#barcode-print-size")
               .value;
@@ -3514,25 +4187,183 @@
               .checked;
 
 
+          let quantity = 1;
+
+          let printItems = [];
+
+
           if (
-            !Number.isInteger(quantity) ||
-            quantity < 1 ||
-            quantity > 500
+            product.useSizes
           ) {
 
-            return toast(
-              "A quantidade deve ser entre 1 e 500."
-            );
+            const checkedSizes =
+              Array.from(
+                document.querySelectorAll(
+                  ".barcode-print-size-check:checked"
+                )
+              );
+
+
+            if (
+              !checkedSizes.length
+            ) {
+              return toast(
+                "Selecione pelo menos uma numeração."
+              );
+            }
+
+
+            printItems =
+              checkedSizes.map(
+                checkbox => {
+
+                  const productSize =
+                    String(
+                      checkbox.dataset.size ||
+                      ""
+                    ).trim();
+
+
+                  const quantityInput =
+                    Array.from(
+                      document.querySelectorAll(
+                        ".barcode-print-size-quantity"
+                      )
+                    ).find(
+                      input =>
+                        String(
+                          input.dataset.size ||
+                          ""
+                        ) === productSize
+                    );
+
+
+                  const itemQuantity =
+                    Number(
+                      quantityInput?.value ||
+                      0
+                    );
+
+
+                  const sizeData =
+                    Array.isArray(
+                      product.sizes
+                    )
+                      ? product.sizes.find(
+                          item =>
+                            String(
+                              item.size
+                            ) ===
+                            productSize
+                        )
+                      : null;
+
+
+                  const itemBarcode =
+                    sizeData?.barcode ||
+                    generateProductSizeBarcode(
+                      product.barcode,
+                      productSize
+                    );
+
+
+                  return {
+                    size:
+                      productSize,
+
+                    quantity:
+                      itemQuantity,
+
+                    barcode:
+                      itemBarcode
+                  };
+                }
+              );
+
+
+            const invalidItem =
+              printItems.find(
+                item =>
+                  !Number.isInteger(
+                    item.quantity
+                  ) ||
+                  item.quantity < 1 ||
+                  item.quantity > 500
+              );
+
+
+            if (
+              invalidItem
+            ) {
+              return toast(
+                `Quantidade inválida para o tamanho ${invalidItem.size}.`
+              );
+            }
+
+
+            const totalLabels =
+              printItems.reduce(
+                (sum, item) =>
+                  sum +
+                  item.quantity,
+                0
+              );
+
+
+            if (
+              totalLabels > 500
+            ) {
+              return toast(
+                "O total de etiquetas não pode ultrapassar 500."
+              );
+            }
+
+
+            quantity =
+              printItems[0].quantity;
+
+          } else {
+
+            quantity =
+              Number(
+                $("#barcode-print-quantity")
+                  ?.value
+              );
+
+
+            if (
+              !Number.isInteger(quantity) ||
+              quantity < 1 ||
+              quantity > 500
+            ) {
+              return toast(
+                "A quantidade deve ser entre 1 e 500."
+              );
+            }
           }
+
+
+          const firstPrintItem =
+            printItems[0] ||
+            null;
 
 
           const printSettings = {
             quantity,
             size,
             pageMode,
-            showPrice
-          };
+            showPrice,
 
+            productSize:
+              firstPrintItem?.size ||
+              "",
+
+            barcode:
+              firstPrintItem?.barcode ||
+              product.barcode,
+
+            printItems
+          };
 
           saveBarcodePrintSettings(
             printSettings
@@ -3579,11 +4410,26 @@
     printWindow
   ) {
 
-    const barcode =
-      String(
-        product.barcode ||
-        ""
-      ).trim();
+    const printItems =
+      Array.isArray(
+        settings.printItems
+      ) &&
+      settings.printItems.length
+        ? settings.printItems
+        : [
+            {
+              size:
+                settings.productSize ||
+                "",
+
+              quantity:
+                settings.quantity,
+
+              barcode:
+                settings.barcode ||
+                product.barcode
+            }
+          ];
 
 
     printWindow.document.write(
@@ -3621,39 +4467,6 @@
         );
 
 
-      const barcodeSVG =
-        document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "svg"
-        );
-
-
-      window.JsBarcode(
-        barcodeSVG,
-        barcode,
-        {
-          format:
-            "CODE128",
-
-          width:
-            2,
-
-          height:
-            55,
-
-          displayValue:
-            false,
-
-          margin:
-            0
-        }
-      );
-
-
-      const barcodeMarkup =
-        barcodeSVG.outerHTML;
-
-
       const companyName =
         String(
           state.settings?.companyName ||
@@ -3689,12 +4502,6 @@
         );
 
 
-      const safeBarcode =
-        escapeBarcodeLabelHTML(
-          barcode
-        );
-
-
       const safePrice =
         escapeBarcodeLabelHTML(
           price
@@ -3712,38 +4519,136 @@
 
 
       const labels =
-        Array.from(
-          {
-            length:
-              settings.quantity
-          },
-          () => `
-            <div class="barcode-label">
+        printItems
+          .map(
+            item => {
 
-              <div class="label-company">
-                ${safeCompany}
-              </div>
+              const itemBarcode =
+                String(
+                  item.barcode ||
+                  product.barcode ||
+                  ""
+                ).trim();
 
-              <div class="label-product">
-                ${safeProduct}
-              </div>
 
-              ${priceMarkup}
+              const itemSize =
+                String(
+                  item.size ||
+                  ""
+                ).trim();
 
-              <div class="label-barcode">
-                ${barcodeMarkup}
-              </div>
 
-              <div class="label-code">
-                ${safeBarcode}
-              </div>
+              const itemQuantity =
+                Number(
+                  item.quantity ||
+                  0
+                );
 
-            </div>
-          `
-        ).join(
-          ""
-        );
 
+              if (
+                !itemBarcode ||
+                !Number.isInteger(
+                  itemQuantity
+                ) ||
+                itemQuantity < 1
+              ) {
+                return "";
+              }
+
+
+              const barcodeSVG =
+                document.createElementNS(
+                  "http://www.w3.org/2000/svg",
+                  "svg"
+                );
+
+
+              window.JsBarcode(
+                barcodeSVG,
+                itemBarcode,
+                {
+                  format:
+                    "CODE128",
+
+                  width:
+                    2,
+
+                  height:
+                    55,
+
+                  displayValue:
+                    false,
+
+                  margin:
+                    0
+                }
+              );
+
+
+              const barcodeMarkup =
+                barcodeSVG.outerHTML;
+
+
+              const safeBarcode =
+                escapeBarcodeLabelHTML(
+                  itemBarcode
+                );
+
+
+              const productSizeLabel =
+                itemSize
+                  ? `Tam. ${escapeBarcodeLabelHTML(itemSize)}`
+                  : "";
+
+
+              return Array.from(
+                {
+                  length:
+                    itemQuantity
+                },
+                () => `
+                  <div class="barcode-label">
+
+                    <div class="label-company">
+                      ${safeCompany}
+                    </div>
+
+                    <div class="label-product">
+                      ${safeProduct}
+                    </div>
+
+                    ${
+                      productSizeLabel
+                        ? `
+                          <div
+                            class="label-size"
+                            style="
+                              font-weight:700;
+                              font-size:11px;
+                              margin-top:1px;
+                            ">
+                            ${productSizeLabel}
+                          </div>
+                        `
+                        : ""
+                    }
+
+                    ${priceMarkup}
+
+                    <div class="label-barcode">
+                      ${barcodeMarkup}
+                    </div>
+
+                    <div class="label-code">
+                      ${safeBarcode}
+                    </div>
+
+                  </div>
+                `
+              ).join("");
+            }
+          )
+          .join("");
 
       const thermal =
         settings.pageMode ===
@@ -4318,6 +5223,43 @@
             $("#product-min-stock").value = p.minStock;
             $("#product-location").value = p.location || "";
             $("#product-active").value = String(p.active);
+
+            const savedSizes =
+              Array.isArray(p.sizes)
+                ? p.sizes
+                : [];
+
+            const productUsesSizes =
+              Boolean(
+                p.useSizes ||
+                savedSizes.length
+              );
+
+            $("#product-use-sizes").checked =
+              productUsesSizes;
+
+            $("#product-sizes-container")
+              ?.classList
+              .toggle(
+                "hidden",
+                !productUsesSizes
+              );
+
+            $$(".product-size-stock").forEach(
+              input => {
+                const saved =
+                  savedSizes.find(
+                    item =>
+                      String(item.size) ===
+                      String(input.dataset.size)
+                  );
+
+                input.value =
+                  saved
+                    ? Number(saved.stock || 0)
+                    : 0;
+              }
+            );
 
             $("#cancel-product-edit")
               .classList

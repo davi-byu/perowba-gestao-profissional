@@ -233,12 +233,29 @@ export const finalizarVenda = onCall(
         "Quantidade"
       );
 
-      grouped.set(
-        productId,
-        (grouped.get(productId) || 0) + qty
-      );
-    }
+      const size = String(
+        item.size || ""
+      ).trim();
 
+      const groupKey =
+        `${productId}::${size}`;
+
+      const current =
+        grouped.get(groupKey);
+
+      if (current) {
+        current.qty += qty;
+      } else {
+        grouped.set(
+          groupKey,
+          {
+            productId,
+            size,
+            qty
+          }
+        );
+      }
+    }
 
     const payment = String(
       data.payment || ""
@@ -319,7 +336,13 @@ export const finalizarVenda = onCall(
 
         const productEntries = [];
 
-        for (const [productId, qty] of grouped.entries()) {
+        for (const groupedItem of grouped.values()) {
+
+          const {
+            productId,
+            size,
+            qty
+          } = groupedItem;
 
           const ref = db.doc(
             `empresas/${companyId}/produtos/${productId}`
@@ -335,7 +358,8 @@ export const finalizarVenda = onCall(
             );
           }
 
-          const product = snapshot.data();
+          const product =
+            snapshot.data();
 
           if (product.active === false) {
             throw new HttpsError(
@@ -345,29 +369,91 @@ export const finalizarVenda = onCall(
           }
 
           const currentStock =
-            Number(product.stock || 0);
-
-          if (
-            !allowNegative &&
-            currentStock < qty
-          ) {
-            throw new HttpsError(
-              "failed-precondition",
-              `Estoque insuficiente para ${
-                product.name || productId
-              }.`
+            Number(
+              product.stock || 0
             );
+
+          const sizes =
+            Array.isArray(
+              product.sizes
+            )
+              ? product.sizes.map(
+                  item => ({
+                    ...item
+                  })
+                )
+              : [];
+
+          let sizeIndex =
+            -1;
+
+          let currentSizeStock =
+            null;
+
+          if (size) {
+
+            sizeIndex =
+              sizes.findIndex(
+                item =>
+                  String(
+                    item.size || ""
+                  ) ===
+                  size
+              );
+
+            if (sizeIndex < 0) {
+              throw new HttpsError(
+                "failed-precondition",
+                `Tamanho ${size} não encontrado para ${
+                  product.name || productId
+                }.`
+              );
+            }
+
+            currentSizeStock =
+              Number(
+                sizes[sizeIndex].stock || 0
+              );
+
+            if (
+              !allowNegative &&
+              currentSizeStock < qty
+            ) {
+              throw new HttpsError(
+                "failed-precondition",
+                `Estoque insuficiente para ${
+                  product.name || productId
+                } Tam. ${size}.`
+              );
+            }
+
+          } else {
+
+            if (
+              !allowNegative &&
+              currentStock < qty
+            ) {
+              throw new HttpsError(
+                "failed-precondition",
+                `Estoque insuficiente para ${
+                  product.name || productId
+                }.`
+              );
+            }
           }
 
           productEntries.push({
             ref,
             productId,
+            size,
             qty,
             product,
-            currentStock
+            currentStock,
+            currentSizeStock,
+            sizeIndex,
+            sizes
           });
         }
-
 
         let customerName = "Cliente balcão";
         let customerId = null;
@@ -414,15 +500,26 @@ export const finalizarVenda = onCall(
               unitCost * entry.qty;
 
             return {
-              productId: entry.productId,
+              productId:
+                entry.productId,
+
               name:
                 entry.product.name ||
                 "Produto",
+
               sku:
                 entry.product.sku || "",
-              qty: entry.qty,
+
+              size:
+                entry.size || "",
+
+              qty:
+                entry.qty,
+
               price,
-              cost: unitCost
+
+              cost:
+                unitCost
             };
           }
         );
@@ -465,25 +562,219 @@ export const finalizarVenda = onCall(
         );
 
 
+        const productUpdates =
+          new Map();
+
         for (const entry of productEntries) {
 
-          const after =
-            entry.currentStock -
+          let update =
+            productUpdates.get(
+              entry.productId
+            );
+
+          if (!update) {
+
+            update = {
+              ref:
+                entry.ref,
+
+              product:
+                entry.product,
+
+              currentStock:
+                entry.currentStock,
+
+              totalQty:
+                0,
+
+              sizes:
+                Array.isArray(
+                  entry.sizes
+                )
+                  ? entry.sizes.map(
+                      item => ({
+                        ...item
+                      })
+                    )
+                  : []
+            };
+
+            productUpdates.set(
+              entry.productId,
+              update
+            );
+          }
+
+
+          update.totalQty +=
             entry.qty;
 
-          transaction.update(
-            entry.ref,
-            {
-              stock: after,
-              updatedAt: createdAt
+
+          if (entry.size) {
+
+            const sizeIndex =
+              update.sizes.findIndex(
+                item =>
+                  String(
+                    item.size || ""
+                  ) ===
+                  entry.size
+              );
+
+            if (sizeIndex < 0) {
+              throw new HttpsError(
+                "failed-precondition",
+                `Tamanho ${entry.size} não encontrado para ${
+                  entry.product.name ||
+                  entry.productId
+                }.`
+              );
             }
+
+            const sizeBefore =
+              Number(
+                update.sizes[
+                  sizeIndex
+                ].stock || 0
+              );
+
+            const sizeAfter =
+              sizeBefore -
+              entry.qty;
+
+            if (
+              !allowNegative &&
+              sizeAfter < 0
+            ) {
+              throw new HttpsError(
+                "failed-precondition",
+                `Estoque insuficiente para ${
+                  entry.product.name ||
+                  entry.productId
+                } Tam. ${entry.size}.`
+              );
+            }
+
+            update.sizes[
+              sizeIndex
+            ] = {
+              ...update.sizes[
+                sizeIndex
+              ],
+              stock:
+                sizeAfter
+            };
+          }
+        }
+
+
+        for (
+          const [
+            productId,
+            update
+          ] of productUpdates.entries()
+        ) {
+
+          const after =
+            update.currentStock -
+            update.totalQty;
+
+          if (
+            !allowNegative &&
+            after < 0
+          ) {
+            throw new HttpsError(
+              "failed-precondition",
+              `Estoque insuficiente para ${
+                update.product.name ||
+                productId
+              }.`
+            );
+          }
+
+          const updateData = {
+            stock:
+              after,
+
+            updatedAt:
+              createdAt
+          };
+
+          if (
+            Array.isArray(
+              update.product.sizes
+            )
+          ) {
+            updateData.sizes =
+              update.sizes;
+          }
+
+          transaction.update(
+            update.ref,
+            updateData
           );
+        }
+
+
+        for (const entry of productEntries) {
+
+          const productUpdate =
+            productUpdates.get(
+              entry.productId
+            );
+
+          const productAfter =
+            productUpdate.currentStock -
+            productUpdate.totalQty;
+
+          let sizeBefore =
+            null;
+
+          let sizeAfter =
+            null;
+
+          if (entry.size) {
+
+            const originalSize =
+              Array.isArray(
+                entry.product.sizes
+              )
+                ? entry.product.sizes.find(
+                    item =>
+                      String(
+                        item.size || ""
+                      ) ===
+                      entry.size
+                  )
+                : null;
+
+            const updatedSize =
+              productUpdate.sizes.find(
+                item =>
+                  String(
+                    item.size || ""
+                  ) ===
+                  entry.size
+              );
+
+            sizeBefore =
+              Number(
+                originalSize?.stock || 0
+              );
+
+            sizeAfter =
+              Number(
+                updatedSize?.stock || 0
+              );
+          }
+
 
           const movementRef = db
             .collection(
               `empresas/${companyId}/movimentacoesEstoque`
             )
             .doc();
+
 
           transaction.set(
             movementRef,
@@ -495,6 +786,9 @@ export const finalizarVenda = onCall(
                 entry.product.name ||
                 "Produto",
 
+              size:
+                entry.size || "",
+
               type:
                 "Saída por venda",
 
@@ -504,7 +798,12 @@ export const finalizarVenda = onCall(
               before:
                 entry.currentStock,
 
-              after,
+              after:
+                productAfter,
+
+              sizeBefore,
+
+              sizeAfter,
 
               reason:
                 `Venda ${number}`,
@@ -525,7 +824,6 @@ export const finalizarVenda = onCall(
             }
           );
         }
-
 
         const sale = {
           number,
