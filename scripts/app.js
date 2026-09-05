@@ -2084,16 +2084,24 @@
               state.cart.length - 1
             ];
 
+          const lastItemSize =
+            String(
+              lastItem.size || ""
+            ).trim();
+
+          const itemDescription =
+            lastItemSize
+              ? `${lastItem.name} - Tam. ${lastItemSize}`
+              : lastItem.name;
 
           const resposta =
             window.prompt(
-              `Quantidade de "${lastItem.name}"` +
+              `Quantidade de "${itemDescription}"` +
               `\nDigite 0 para remover o item:`,
               String(
                 lastItem.qty
               )
             );
-
 
           if (
             resposta === null
@@ -2101,13 +2109,11 @@
             return;
           }
 
-
           const quantity =
             Number(
               String(resposta)
                 .trim()
             );
-
 
           if (
             !Number.isInteger(quantity) ||
@@ -2121,31 +2127,37 @@
             return;
           }
 
-
           if (
             quantity === 0
           ) {
 
             state.cart =
               state.cart.filter(
-                item =>
-                  item.productId !==
-                  lastItem.productId
-              );
+                item => {
+                  const itemSize =
+                    String(
+                      item.size || ""
+                    ).trim();
 
+                  return !(
+                    item.productId ===
+                      lastItem.productId &&
+                    itemSize ===
+                      lastItemSize
+                  );
+                }
+              );
 
             saveState();
 
             renderPDV();
 
-
             toast(
-              `${lastItem.name} removido do carrinho.`
+              `${itemDescription} removido do carrinho.`
             );
 
             return;
           }
-
 
           const product =
             state.products.find(
@@ -2154,33 +2166,67 @@
                 lastItem.productId
             );
 
+          let availableStock =
+            Number(
+              product?.stock || 0
+            );
+
+          if (
+            product &&
+            lastItemSize
+          ) {
+
+            const sizeData =
+              Array.isArray(product.sizes)
+                ? product.sizes.find(
+                    item =>
+                      String(
+                        item.size || ""
+                      ).trim() ===
+                        lastItemSize
+                  )
+                : null;
+
+            if (!sizeData) {
+
+              toast(
+                `Tamanho ${lastItemSize} não encontrado neste produto.`
+              );
+
+              return;
+            }
+
+            availableStock =
+              Number(
+                sizeData.stock || 0
+              );
+          }
 
           if (
             product &&
             !state.settings.allowNegativeStock &&
             quantity >
-              Number(product.stock)
+              availableStock
           ) {
 
             toast(
-              `Estoque disponível: ${product.stock}.`
+              lastItemSize
+                ? `Estoque disponível do tamanho ${lastItemSize}: ${availableStock}.`
+                : `Estoque disponível: ${availableStock}.`
             );
 
             return;
           }
 
-
           lastItem.qty =
             quantity;
-
 
           saveState();
 
           renderPDV();
 
-
           toast(
-            `Quantidade de ${lastItem.name}: ${quantity}.`
+            `Quantidade de ${itemDescription}: ${quantity}.`
           );
 
           return;
