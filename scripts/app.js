@@ -2248,20 +2248,234 @@
   }
 
   function bindProductTiles() {
-    $$("[data-add-product]").forEach(btn => btn.addEventListener("click", () => {
-      const product = state.products.find(p => p.id === btn.dataset.addProduct);
-      if (!product || product.stock <= 0) return;
-      const existing = state.cart.find(item => item.productId === product.id);
-      const currentQty = existing?.qty || 0;
-      if (!state.settings.allowNegativeStock && currentQty >= product.stock) {
-        toast("Quantidade máxima disponível atingida.");
-        return;
-      }
-      if (existing) existing.qty += 1;
-      else state.cart.push({ productId: product.id, name: product.name, price: Number(product.price), cost: Number(product.cost), qty: 1 });
-      saveState();
-      renderPDV();
-    }));
+
+    $$("[data-add-product]").forEach(
+      btn =>
+        btn.addEventListener(
+          "click",
+          () => {
+
+            const product =
+              state.products.find(
+                p =>
+                  p.id ===
+                  btn.dataset.addProduct
+              );
+
+            if (!product) {
+              return;
+            }
+
+
+            const hasSizes =
+              Boolean(product.useSizes) ||
+              (
+                Array.isArray(product.sizes) &&
+                product.sizes.length > 0
+              );
+
+
+            if (hasSizes) {
+
+              const availableSizes =
+                (
+                  Array.isArray(product.sizes)
+                    ? product.sizes
+                    : []
+                )
+                  .filter(
+                    item =>
+                      state.settings.allowNegativeStock ||
+                      Number(item.stock || 0) > 0
+                  );
+
+
+              if (!availableSizes.length) {
+                toast(
+                  "Nenhum tamanho disponível em estoque."
+                );
+                return;
+              }
+
+
+              const optionsText =
+                availableSizes
+                  .map(
+                    item =>
+                      `${item.size} (${Number(item.stock || 0)} em estoque)`
+                  )
+                  .join("\n");
+
+
+              const selectedSize =
+                String(
+                  prompt(
+                    `Escolha o tamanho:\n\n${optionsText}`,
+                    availableSizes[0]?.size || ""
+                  ) || ""
+                ).trim();
+
+
+              if (!selectedSize) {
+                return;
+              }
+
+
+              const sizeData =
+                availableSizes.find(
+                  item =>
+                    String(item.size || "") ===
+                    selectedSize
+                );
+
+
+              if (!sizeData) {
+                toast(
+                  "Tamanho inválido."
+                );
+                return;
+              }
+
+
+              const availableStock =
+                Number(
+                  sizeData.stock || 0
+                );
+
+
+              const existing =
+                state.cart.find(
+                  item =>
+                    item.productId ===
+                      product.id &&
+                    String(
+                      item.size || ""
+                    ) ===
+                      selectedSize
+                );
+
+
+              const currentQty =
+                existing?.qty || 0;
+
+
+              if (
+                !state.settings.allowNegativeStock &&
+                currentQty >= availableStock
+              ) {
+                toast(
+                  `Estoque máximo do Tam. ${selectedSize} atingido.`
+                );
+                return;
+              }
+
+
+              if (existing) {
+                existing.qty += 1;
+              } else {
+                state.cart.push({
+                  productId:
+                    product.id,
+
+                  name:
+                    product.name,
+
+                  price:
+                    Number(product.price),
+
+                  cost:
+                    Number(product.cost),
+
+                  qty:
+                    1,
+
+                  size:
+                    selectedSize,
+
+                  barcode:
+                    String(
+                      sizeData.barcode || ""
+                    )
+                });
+              }
+
+
+              saveState();
+              renderPDV();
+              return;
+            }
+
+
+            if (
+              Number(product.stock || 0) <= 0 &&
+              !state.settings.allowNegativeStock
+            ) {
+              return;
+            }
+
+
+            const existing =
+              state.cart.find(
+                item =>
+                  item.productId ===
+                    product.id &&
+                  !String(
+                    item.size || ""
+                  )
+              );
+
+
+            const currentQty =
+              existing?.qty || 0;
+
+
+            if (
+              !state.settings.allowNegativeStock &&
+              currentQty >=
+                Number(product.stock || 0)
+            ) {
+              toast(
+                "Quantidade máxima disponível atingida."
+              );
+              return;
+            }
+
+
+            if (existing) {
+              existing.qty += 1;
+            } else {
+              state.cart.push({
+                productId:
+                  product.id,
+
+                name:
+                  product.name,
+
+                price:
+                  Number(product.price),
+
+                cost:
+                  Number(product.cost),
+
+                qty:
+                  1,
+
+                size:
+                  "",
+
+                barcode:
+                  String(
+                    product.barcode || ""
+                  )
+              });
+            }
+
+
+            saveState();
+            renderPDV();
+          }
+        )
+    );
   }
 
   function bindCartActions() {
