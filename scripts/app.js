@@ -2671,92 +2671,297 @@
 
   async function finishSale() {
     if (cloudEnabled()) return finishSaleCloud();
-    if (!state.cart.length) return toast("Adicione pelo menos um produto.");
 
-    const discount = Math.max(0, Number($("#sale-discount").value || 0));
-    const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    if (!state.cart.length) {
+      return toast("Adicione pelo menos um produto.");
+    }
+
+    const discount =
+      Math.max(
+        0,
+        Number(
+          $("#sale-discount").value || 0
+        )
+      );
+
+    const subtotal =
+      state.cart.reduce(
+        (sum, item) =>
+          sum +
+          item.price * item.qty,
+        0
+      );
 
     if (discount > subtotal) {
-      return toast("O desconto não pode ser maior que o valor da venda.");
+      return toast(
+        "O desconto não pode ser maior que o valor da venda."
+      );
     }
 
     for (const item of state.cart) {
-      const product = state.products.find(p => p.id === item.productId);
+
+      const product =
+        state.products.find(
+          p =>
+            p.id === item.productId
+        );
 
       if (!product) {
-        return toast(`Produto ${item.name} não encontrado.`);
+        return toast(
+          `Produto ${item.name} não encontrado.`
+        );
       }
 
-      if (!state.settings.allowNegativeStock && product.stock < item.qty) {
-        return toast(`Estoque insuficiente para ${item.name}.`);
+      const itemSize =
+        String(
+          item.size || ""
+        ).trim();
+
+      const hasSizes =
+        Boolean(product.useSizes) ||
+        (
+          Array.isArray(product.sizes) &&
+          product.sizes.length > 0
+        );
+
+      if (
+        hasSizes &&
+        !itemSize
+      ) {
+        return toast(
+          `Selecione o tamanho de ${item.name}.`
+        );
+      }
+
+      if (itemSize) {
+
+        const sizeData =
+          Array.isArray(product.sizes)
+            ? product.sizes.find(
+                sizeItem =>
+                  String(
+                    sizeItem.size || ""
+                  ).trim() ===
+                    itemSize
+              )
+            : null;
+
+        if (!sizeData) {
+          return toast(
+            `Tamanho ${itemSize} não encontrado para ${item.name}.`
+          );
+        }
+
+        const sizeStock =
+          Number(
+            sizeData.stock || 0
+          );
+
+        if (
+          !state.settings.allowNegativeStock &&
+          sizeStock < item.qty
+        ) {
+          return toast(
+            `Estoque insuficiente para ${item.name} - Tam. ${itemSize}. Disponível: ${sizeStock}.`
+          );
+        }
+
+      } else {
+
+        if (
+          !state.settings.allowNegativeStock &&
+          Number(product.stock || 0) <
+            item.qty
+        ) {
+          return toast(
+            `Estoque insuficiente para ${item.name}.`
+          );
+        }
       }
     }
 
-    const customer = state.customers.find(c => c.id === $("#sale-customer").value);
-    const total = subtotal - discount;
-    const cost = state.cart.reduce((sum, item) => sum + item.cost * item.qty, 0);
+    const customer =
+      state.customers.find(
+        c =>
+          c.id ===
+          $("#sale-customer").value
+      );
+
+    const total =
+      subtotal - discount;
+
+    const cost =
+      state.cart.reduce(
+        (sum, item) =>
+          sum +
+          item.cost * item.qty,
+        0
+      );
 
     const sale = {
       id: uid("ven"),
-      number: `V${String(state.sales.length + 1).padStart(6, "0")}`,
-      items: structuredClone(state.cart),
+      number:
+        `V${String(
+          state.sales.length + 1
+        ).padStart(6, "0")}`,
+      items:
+        structuredClone(
+          state.cart
+        ),
       subtotal,
       discount,
       total,
       cost,
-      profit: total - cost,
-      customerId: customer?.id || null,
-      customerName: customer?.name || "Cliente balcão",
-      payment: $("#sale-payment").value,
-      sellerId: currentUser.id,
-      sellerName: currentUser.name,
-      status: "pago",
-      createdAt: nowISO()
+      profit:
+        total - cost,
+      customerId:
+        customer?.id || null,
+      customerName:
+        customer?.name ||
+        "Cliente balcão",
+      payment:
+        $("#sale-payment").value,
+      sellerId:
+        currentUser.id,
+      sellerName:
+        currentUser.name,
+      status:
+        "pago",
+      createdAt:
+        nowISO()
     };
 
-    sale.items.forEach(item => {
-      const product = state.products.find(p => p.id === item.productId);
-      const before = product.stock;
+    sale.items.forEach(
+      item => {
 
-      product.stock -= item.qty;
-      product.updatedAt = nowISO();
+        const product =
+          state.products.find(
+            p =>
+              p.id ===
+              item.productId
+          );
 
-      state.stockMovements.unshift({
-        id: uid("mov"),
-        productId: product.id,
-        productName: product.name,
-        type: "Saída por venda",
-        quantity: -item.qty,
-        before,
-        after: product.stock,
-        reason: `Venda ${sale.number}`,
-        userId: currentUser.id,
-        userName: currentUser.name,
-        createdAt: nowISO()
-      });
-    });
+        const itemSize =
+          String(
+            item.size || ""
+          ).trim();
 
-    state.sales.unshift(sale);
+        const before =
+          Number(
+            product.stock || 0
+          );
+
+        let sizeBefore = null;
+        let sizeAfter = null;
+
+        if (itemSize) {
+
+          const sizeData =
+            Array.isArray(product.sizes)
+              ? product.sizes.find(
+                  sizeItem =>
+                    String(
+                      sizeItem.size || ""
+                    ).trim() ===
+                      itemSize
+                )
+              : null;
+
+          if (sizeData) {
+
+            sizeBefore =
+              Number(
+                sizeData.stock || 0
+              );
+
+            sizeData.stock =
+              sizeBefore -
+              item.qty;
+
+            sizeAfter =
+              Number(
+                sizeData.stock
+              );
+          }
+        }
+
+        product.stock =
+          before -
+          item.qty;
+
+        product.updatedAt =
+          nowISO();
+
+        state.stockMovements.unshift({
+          id:
+            uid("mov"),
+          productId:
+            product.id,
+          productName:
+            product.name,
+          size:
+            itemSize || "",
+          type:
+            "Saída por venda",
+          quantity:
+            -item.qty,
+          before,
+          after:
+            product.stock,
+          sizeBefore,
+          sizeAfter,
+          reason:
+            `Venda ${sale.number}`,
+          userId:
+            currentUser.id,
+          userName:
+            currentUser.name,
+          createdAt:
+            nowISO()
+        });
+      }
+    );
+
+    state.sales.unshift(
+      sale
+    );
 
     state.financialEntries.unshift({
-      id: uid("fin"),
-      type: "receita",
-      category: "Vendas",
-      description: `Venda ${sale.number}`,
-      amount: total,
-      dueDate: todayISO(),
-      status: "pago",
-      relatedId: sale.id,
-      createdAt: nowISO()
+      id:
+        uid("fin"),
+      type:
+        "receita",
+      category:
+        "Vendas",
+      description:
+        `Venda ${sale.number}`,
+      amount:
+        total,
+      dueDate:
+        todayISO(),
+      status:
+        "pago",
+      relatedId:
+        sale.id,
+      createdAt:
+        nowISO()
     });
 
-    logAudit("CRIAR", "Venda", `Venda ${sale.number} finalizada`, null, sale);
+    logAudit(
+      "CRIAR",
+      "Venda",
+      `Venda ${sale.number} finalizada`,
+      null,
+      sale
+    );
 
     state.cart = [];
 
     saveState();
 
-    toast(`Venda ${sale.number} finalizada com sucesso.`);
+    toast(
+      `Venda ${sale.number} finalizada com sucesso.`
+    );
 
     renderPDV();
   }
