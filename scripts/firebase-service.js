@@ -62,6 +62,46 @@ const DIRECT_SYNC_KEYS = [
 ];
 
 
+// =========================================================
+// COLEÇÕES QUE CADA FUNÇÃO PODE LER
+// Deve permanecer em conformidade com firestore.rules
+// =========================================================
+
+const canReadCollection = (role, stateKey) => {
+
+  // Somente administrador pode consultar auditoria.
+  if (stateKey === "audit") {
+    return role === "admin";
+  }
+
+
+  // Compras não são liberadas para vendedor.
+  if (stateKey === "purchases") {
+    return [
+      "admin",
+      "gerente",
+      "estoquista",
+      "financeiro"
+    ].includes(role);
+  }
+
+
+  // Financeiro não é liberado para vendedor nem estoquista.
+  if (stateKey === "financialEntries") {
+    return [
+      "admin",
+      "gerente",
+      "financeiro"
+    ].includes(role);
+  }
+
+
+  // As demais coleções podem ser lidas por qualquer
+  // usuário ativo da mesma empresa, conforme as regras.
+  return true;
+};
+
+
 const clone = value =>
   JSON.parse(
     JSON.stringify(value)
@@ -414,14 +454,22 @@ export class FirebaseService {
 
         Object.entries(
           COLLECTION_MAP
-        ).map(
+        )
+          .filter(
+            ([stateKey]) =>
+              canReadCollection(
+                profile.role,
+                stateKey
+              )
+          )
+          .map(
 
-          async (
-            [
-              stateKey,
-              firestoreName
-            ]
-          ) => {
+            async (
+              [
+                stateKey,
+                firestoreName
+              ]
+            ) => {
 
             const snapshot =
               await getDocs(

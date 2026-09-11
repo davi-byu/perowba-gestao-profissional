@@ -319,6 +319,7 @@
     const activeProducts = state.products.filter(p => p.active);
     const cartTotal = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
     const cartCost = state.cart.reduce((sum, item) => sum + item.cost * item.qty, 0);
+    
 
     $("#content").innerHTML = `
       <div class="pdv-layout">
@@ -1235,18 +1236,11 @@
 
 
         const exactBarcodeProduct =
-          activeProducts.find(
-            product =>
-              String(
-                product.barcode || ""
-              )
-                .trim()
-                .toLowerCase() ===
-                term
+          findScannedProduct(
+            term
           );
 
-
-        if (
+if (
           exactBarcodeProduct
         ) {
 
@@ -3194,7 +3188,7 @@
     size
   ) {
 
-    const base =
+    const rawBase =
       String(
         productBarcode || ""
       ).trim();
@@ -3205,15 +3199,20 @@
       ).trim();
 
     if (
-      !base ||
+      !rawBase ||
       !productSize
     ) {
       return "";
     }
 
+    const base =
+      rawBase.replace(
+        /-\d{1,3}$/,
+        ""
+      );
+
     return `${base}-${productSize}`;
   }
-
 
   function bindProductBarcodeControls() {
 
@@ -3767,6 +3766,25 @@
         $("#product-use-sizes")?.checked
       );
 
+    const rawProductBarcode =
+      $("#product-barcode").value.trim();
+
+    const productBarcode =
+      useSizes
+        ? rawProductBarcode.replace(
+            /-\d{1,3}$/,
+            ""
+          )
+        : rawProductBarcode;
+
+    if (
+      useSizes &&
+      productBarcode !== rawProductBarcode
+    ) {
+      $("#product-barcode").value =
+        productBarcode;
+    }
+
     const sizes =
       useSizes
         ? Array.from(
@@ -3788,7 +3806,7 @@
                 ),
               barcode:
                 generateProductSizeBarcode(
-                  $("#product-barcode").value.trim(),
+                  productBarcode,
                   size
                 )
             };
@@ -3808,7 +3826,7 @@
     const payload = {
       name: $("#product-name").value.trim(),
       sku: $("#product-sku").value.trim(),
-      barcode: $("#product-barcode").value.trim(),
+      barcode: productBarcode,
       category: $("#product-category").value.trim(),
       brand: $("#product-brand").value.trim(),
       unit: $("#product-unit").value,
