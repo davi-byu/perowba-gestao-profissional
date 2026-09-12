@@ -2641,6 +2641,62 @@ if (
     const cameraSearch =
       $("#pdv-search");
 
+        // Mantém a câmera acima de toda a interface no celular
+    const cameraModalOriginalParent =
+      cameraModal?.parentNode ||
+      null;
+
+    const cameraModalOriginalNextSibling =
+      cameraModal?.nextSibling ||
+      null;
+
+
+    const moveCameraModalToBody =
+      () => {
+
+        if (
+          cameraModal &&
+          cameraModal.parentNode !==
+            document.body
+        ) {
+
+          document.body.appendChild(
+            cameraModal
+          );
+        }
+      };
+
+
+    const restoreCameraModal =
+      () => {
+
+        if (
+          !cameraModal ||
+          !cameraModalOriginalParent
+        ) {
+          return;
+        }
+
+
+        if (
+          cameraModalOriginalNextSibling &&
+          cameraModalOriginalNextSibling.parentNode ===
+            cameraModalOriginalParent
+        ) {
+
+          cameraModalOriginalParent.insertBefore(
+            cameraModal,
+            cameraModalOriginalNextSibling
+          );
+
+        } else {
+
+          cameraModalOriginalParent.appendChild(
+            cameraModal
+          );
+        }
+      };
+    
 
     let cameraScanner =
       null;
