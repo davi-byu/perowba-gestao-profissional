@@ -3389,7 +3389,7 @@ if (
   function renderProducts() {
     $("#content").innerHTML = `
       <div class="grid two">
-        <article class="card">
+        <article class="card ${canManage() ? "" : "hidden"}">
           <div class="card-header"><h2>Novo produto</h2></div>
           <div class="card-body">
             <form id="product-form" class="form-grid two-columns">
