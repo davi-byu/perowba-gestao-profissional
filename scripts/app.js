@@ -2941,6 +2941,7 @@ if (
           "true"
         );
 
+        restoreCameraModal();
 
         if (
           cameraReader
@@ -3080,6 +3081,7 @@ if (
 
         cameraSearch?.blur();
 
+        moveCameraModalToBody();
 
         cameraModal?.classList.remove(
           "hidden"
