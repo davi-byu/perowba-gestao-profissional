@@ -83,6 +83,18 @@ const canReadCollection = (role, stateKey) => {
       .toLowerCase();
 
 
+  // Vendedor recebe produtos e vendas pela Cloud Function segura.
+  if (
+    normalizedRole === "vendedor" &&
+    [
+      "products",
+      "sales"
+    ].includes(stateKey)
+  ) {
+    return false;
+  }
+
+
   // Somente administrador pode consultar auditoria.
   if (stateKey === "audit") {
 
@@ -741,6 +753,55 @@ export class FirebaseService {
 
 
     // =======================================================
+    // DADOS PROTEGIDOS DO VENDEDOR
+    // =======================================================
+
+    if (
+      role === "vendedor"
+    ) {
+
+      console.log(
+        "Carregando produtos e vendas protegidos..."
+      );
+
+
+      const sellerData =
+        await this.call(
+          "carregarDadosVendedor",
+          {}
+        );
+
+
+      state.products =
+        Array.isArray(
+          sellerData?.products
+        )
+          ? sellerData.products
+          : [];
+
+
+      state.sales =
+        Array.isArray(
+          sellerData?.sales
+        )
+          ? sellerData.sales
+          : [];
+
+
+      console.log(
+        "Dados protegidos carregados:",
+        {
+          products:
+            state.products.length,
+
+          sales:
+            state.sales.length
+        }
+      );
+    }
+
+
+    // =======================================================
     // CARREGAR USUÁRIOS
     // SOMENTE ADMIN
     // =======================================================
@@ -922,7 +983,8 @@ export class FirebaseService {
         .then(
           () =>
             this.#syncStateNow(
-              state
+              state,
+              currentUser
             )
         )
 
@@ -938,7 +1000,18 @@ export class FirebaseService {
   }
 
 
-  async #syncStateNow(state) {
+  async #syncStateNow(
+    state,
+    currentUser
+  ) {
+
+    const role =
+      String(
+        currentUser?.role || ""
+      )
+        .trim()
+        .toLowerCase();
+
 
     const batch =
       writeBatch(
@@ -994,6 +1067,15 @@ export class FirebaseService {
       const stateKey of
       DIRECT_SYNC_KEYS
     ) {
+
+      // Produtos são somente leitura para vendedor.
+      if (
+        role === "vendedor" &&
+        stateKey === "products"
+      ) {
+        continue;
+      }
+
 
       const firestoreName =
         COLLECTION_MAP[

@@ -3036,3 +3036,272 @@ onCall(
     };
   }
 );
+/* =========================================================
+   DADOS SEGUROS PARA VENDEDOR
+   ========================================================= */
+
+function sanitizeSellerData(value) {
+
+  if (Array.isArray(value)) {
+    return value.map(
+      item =>
+        sanitizeSellerData(item)
+    );
+  }
+
+
+  if (
+    !value ||
+    typeof value !== "object"
+  ) {
+    return value;
+  }
+
+
+  /*
+   * Preserva objetos especiais do Firestore,
+   * como Timestamp.
+   */
+  if (
+    Object.getPrototypeOf(value) !==
+    Object.prototype
+  ) {
+    return value;
+  }
+
+
+  const safe = {};
+
+
+  for (
+    const [
+      key,
+      itemValue
+    ] of Object.entries(value)
+  ) {
+
+    const normalizedKey =
+      String(key)
+        .toLowerCase();
+
+
+    /*
+     * Nunca enviar valores sensíveis
+     * para o navegador do vendedor.
+     */
+    if (
+      normalizedKey.includes("cost") ||
+      normalizedKey.includes("profit") ||
+      normalizedKey.includes("custo") ||
+      normalizedKey.includes("lucro")
+    ) {
+      continue;
+    }
+
+
+    /*
+     * Campo interno desnecessário
+     * no frontend do vendedor.
+     */
+    if (
+      normalizedKey ===
+      "servercreatedat"
+    ) {
+      continue;
+    }
+
+
+    safe[key] =
+      sanitizeSellerData(
+        itemValue
+      );
+  }
+
+
+  return safe;
+}
+
+
+function getBrazilDateKey() {
+
+  const formatter =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          "America/Sao_Paulo",
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit"
+      }
+    );
+
+
+  const parts =
+    formatter.formatToParts(
+      new Date()
+    );
+
+
+  const values =
+    Object.fromEntries(
+      parts.map(
+        part => [
+          part.type,
+          part.value
+        ]
+      )
+    );
+
+
+  return (
+    `${values.year}-` +
+    `${values.month}-` +
+    `${values.day}`
+  );
+}
+
+
+export const carregarDadosVendedor =
+onCall(
+  callableOptions,
+  async request => {
+
+    const uid =
+      requireAuth(request);
+
+
+    const profile =
+      await getProfile(uid);
+
+
+    /*
+     * Esta função é exclusiva
+     * para vendedores.
+     */
+    requireRole(
+      profile,
+      ["vendedor"]
+    );
+
+
+    const companyId =
+      profile.companyId;
+
+
+    const today =
+      getBrazilDateKey();
+
+
+    /*
+     * Horário oficial usado atualmente:
+     * UTC-03:00.
+     *
+     * Exemplo:
+     * 00:00 no Brasil =
+     * 03:00 UTC.
+     */
+    const startDate =
+      new Date(
+        `${today}T00:00:00-03:00`
+      );
+
+
+    const endDate =
+      new Date(
+        startDate.getTime() +
+        24 * 60 * 60 * 1000
+      );
+
+
+    const [
+      productsSnapshot,
+      salesSnapshot
+    ] =
+      await Promise.all([
+
+        db.collection(
+          `empresas/${companyId}/produtos`
+        ).get(),
+
+        db.collection(
+          `empresas/${companyId}/vendas`
+        )
+          .where(
+            "createdAt",
+            ">=",
+            startDate.toISOString()
+          )
+          .where(
+            "createdAt",
+            "<",
+            endDate.toISOString()
+          )
+          .get()
+      ]);
+
+
+    const products =
+      productsSnapshot.docs
+        .map(
+          document => ({
+            id:
+              document.id,
+
+            ...sanitizeSellerData(
+              document.data()
+            )
+          })
+        )
+        .sort(
+          (a, b) =>
+            String(
+              a.name || ""
+            ).localeCompare(
+              String(
+                b.name || ""
+              ),
+              "pt-BR"
+            )
+        );
+
+
+    const sales =
+      salesSnapshot.docs
+        .map(
+          document => ({
+            id:
+              document.id,
+
+            ...sanitizeSellerData(
+              document.data()
+            )
+          })
+        )
+        .sort(
+          (a, b) =>
+            String(
+              b.createdAt || ""
+            ).localeCompare(
+              String(
+                a.createdAt || ""
+              )
+            )
+        );
+
+
+    return {
+      date:
+        today,
+
+      products,
+      sales
+    };
+  }
+);
