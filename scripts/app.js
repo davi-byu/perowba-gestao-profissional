@@ -7534,8 +7534,16 @@ if (
   }
 
   function renderReports() {
+    const sellerOnlyToday =
+      currentUser?.role === "vendedor";
+
+    const reportToday =
+      todayISO();
+
     const monthStart =
-      `${todayISO().slice(0,7)}-01`;
+      sellerOnlyToday
+        ? reportToday
+        : `${reportToday.slice(0,7)}-01`;
 
     $("#content").innerHTML = `
       <article class="card">
@@ -7550,7 +7558,8 @@ if (
               <input
                 id="report-start"
                 type="date"
-                value="${monthStart}">
+                value="${monthStart}"
+                ${sellerOnlyToday ? "disabled" : ""}>
             </label>
 
             <label>
@@ -7558,7 +7567,8 @@ if (
               <input
                 id="report-end"
                 type="date"
-                value="${todayISO()}">
+                value="${reportToday}"
+                ${sellerOnlyToday ? "disabled" : ""}>
             </label>
 
             <label>
@@ -7634,8 +7644,14 @@ if (
               );
 
             return (
-              (!start || date >= start) &&
-              (!end || date <= end) &&
+              (
+                sellerOnlyToday
+                  ? date === reportToday
+                  : (
+                      (!start || date >= start) &&
+                      (!end || date <= end)
+                    )
+              ) &&
               (!status || s.status === status)
             );
           }
@@ -7694,7 +7710,7 @@ if (
           style="margin-top:18px">
 
           <div class="card-header">
-            <h2>Vendas por período</h2>
+            <h2>${sellerOnlyToday ? "Vendas de hoje" : "Vendas por período"}</h2>
           </div>
 
           <div class="table-wrap">
@@ -7745,7 +7761,14 @@ if (
                 "Status"
               ],
 
-              ...state.sales.map(
+              ...(sellerOnlyToday
+                ? state.sales.filter(
+                    s =>
+                      String(s.createdAt || "")
+                        .slice(0, 10) === reportToday
+                  )
+                : state.sales
+              ).map(
                 s => [
                   s.number,
                   s.createdAt,
