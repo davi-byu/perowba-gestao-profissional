@@ -538,20 +538,973 @@
     return `<article class="card metric"><span class="metric-label">${label}</span><strong class="metric-value">${value}</strong><div class="metric-note">${note}</div></article>`;
   }
 
+    // =========================================================
+  // TABELA DE VENDAS + DETALHES DA VENDA
+  // =========================================================
+
   function salesTable(sales) {
-    if (!sales.length) return `<div class="empty-state">Nenhuma venda registrada.</div>`;
-    return `<table>
-      <thead><tr><th>Número</th><th>Data</th><th>Cliente</th><th>Pagamento</th><th>Total</th><th>Status</th></tr></thead>
-      <tbody>${sales.map(s => `<tr>
-        <td>${escapeHTML(s.number)}</td>
-        <td>${dateBR(s.createdAt)}</td>
-        <td>${escapeHTML(s.customerName || "Cliente balcão")}</td>
-        <td>${escapeHTML(s.payment)}</td>
-        <td>${money(s.total)}</td>
-        <td>${statusBadge(s.status)}</td>
-      </tr>`).join("")}</tbody>
-    </table>`;
+
+    if (!sales.length) {
+      return `
+        <div class="empty-state">
+          Nenhuma venda registrada.
+        </div>
+      `;
+    }
+
+
+    return `
+      <table>
+
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Pagamento</th>
+            <th>Total</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+
+        <tbody>
+
+          ${sales
+            .map(
+              sale => {
+
+                const saleKey =
+                  String(
+                    sale.id ||
+                    sale.number ||
+                    ""
+                  );
+
+
+                return `
+                  <tr
+                    data-sale-id="${escapeHTML(saleKey)}"
+                    tabindex="0"
+                    role="button"
+                    title="Clique para visualizar os detalhes da venda"
+                    style="cursor:pointer">
+
+                    <td>
+                      <strong>
+                        ${escapeHTML(
+                          sale.number ||
+                          "—"
+                        )}
+                      </strong>
+                    </td>
+
+
+                    <td>
+                      ${dateBR(
+                        sale.createdAt
+                      )}
+                    </td>
+
+
+                    <td>
+                      ${escapeHTML(
+                        sale.customerName ||
+                        "Cliente balcão"
+                      )}
+                    </td>
+
+
+                    <td>
+                      ${escapeHTML(
+                        sale.payment ||
+                        "—"
+                      )}
+                    </td>
+
+
+                    <td>
+                      ${money(
+                        sale.total ||
+                        0
+                      )}
+                    </td>
+
+
+                    <td>
+                      ${statusBadge(
+                        sale.status
+                      )}
+                    </td>
+
+                  </tr>
+                `;
+              }
+            )
+            .join("")}
+
+        </tbody>
+
+      </table>
+    `;
   }
+
+
+  // =========================================================
+  // FECHAR DETALHES DA VENDA
+  // =========================================================
+
+  function closeSaleDetails() {
+
+    const modal =
+      document.querySelector(
+        "#sale-details-modal"
+      );
+
+
+    if (modal) {
+
+      modal.remove();
+
+    }
+  }
+
+
+  // =========================================================
+  // ABRIR DETALHES DA VENDA
+  // =========================================================
+
+  function openSaleDetails(
+    saleKey
+  ) {
+
+    const sale =
+      state.sales.find(
+        item =>
+          String(
+            item.id ||
+            item.number ||
+            ""
+          ) ===
+          String(
+            saleKey ||
+            ""
+          )
+      );
+
+
+    if (!sale) {
+
+      toast(
+        "Venda não encontrada."
+      );
+
+      return;
+    }
+
+
+    closeSaleDetails();
+
+
+    const items =
+      Array.isArray(
+        sale.items
+      )
+        ? sale.items
+        : [];
+
+
+    // =======================================================
+    // PRODUTOS DA VENDA
+    // =======================================================
+
+    const itemsMarkup =
+      items.length
+
+        ? items
+            .map(
+              item => {
+
+                const product =
+                  state.products.find(
+                    productItem =>
+                      productItem.id ===
+                      item.productId
+                  );
+
+
+                const productName =
+                  item.name ||
+                  item.productName ||
+                  product?.name ||
+                  "Produto";
+
+
+                const size =
+                  String(
+                    item.size ||
+                    ""
+                  ).trim();
+
+
+                const quantity =
+                  Number(
+                    item.qty ??
+                    item.quantity ??
+                    0
+                  );
+
+
+                const rawPrice =
+                  item.price ??
+                  item.unitPrice ??
+                  item.unitValue ??
+                  item.salePrice ??
+                  product?.price;
+
+
+                const unitPrice =
+                  Number(
+                    rawPrice ||
+                    0
+                  );
+
+
+                const hasPrice =
+                  rawPrice !== undefined &&
+                  rawPrice !== null &&
+                  rawPrice !== "" &&
+                  Number.isFinite(
+                    unitPrice
+                  );
+
+
+                const itemTotal =
+                  hasPrice
+                    ? unitPrice *
+                      quantity
+                    : 0;
+
+
+                return `
+                  <tr>
+
+                    <td>
+
+                      <strong>
+                        ${escapeHTML(
+                          productName
+                        )}
+                      </strong>
+
+                    </td>
+
+
+                    <td>
+
+                      ${
+                        size
+                          ? `Tam. ${escapeHTML(size)}`
+                          : "—"
+                      }
+
+                    </td>
+
+
+                    <td>
+
+                      ${quantity}
+
+                    </td>
+
+
+                    <td>
+
+                      ${
+                        hasPrice
+                          ? money(
+                              unitPrice
+                            )
+                          : "—"
+                      }
+
+                    </td>
+
+
+                    <td>
+
+                      ${
+                        hasPrice
+                          ? money(
+                              itemTotal
+                            )
+                          : "—"
+                      }
+
+                    </td>
+
+                  </tr>
+                `;
+              }
+            )
+            .join("")
+
+        : `
+            <tr>
+
+              <td
+                colspan="5"
+                style="
+                  padding:24px;
+                  text-align:center;
+                  color:#64748b;
+                ">
+
+                Esta venda não possui
+                produtos detalhados no registro.
+
+              </td>
+
+            </tr>
+          `;
+
+
+    // =======================================================
+    // MODAL
+    // =======================================================
+
+    const modal =
+      document.createElement(
+        "div"
+      );
+
+
+    modal.id =
+      "sale-details-modal";
+
+
+    modal.setAttribute(
+      "role",
+      "dialog"
+    );
+
+
+    modal.setAttribute(
+      "aria-modal",
+      "true"
+    );
+
+
+    modal.setAttribute(
+      "aria-label",
+      `Detalhes da venda ${sale.number || ""}`
+    );
+
+
+    modal.innerHTML = `
+      <div
+        style="
+          width:min(94vw,850px);
+          max-height:90vh;
+          overflow:auto;
+          background:#ffffff;
+          border-radius:18px;
+          box-shadow:
+            0 24px 70px
+            rgba(15,23,42,.30);
+        ">
+
+
+        <!-- CABEÇALHO -->
+
+        <div
+          style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            padding:20px 22px;
+            border-bottom:
+              1px solid #e2e8f0;
+          ">
+
+
+          <div>
+
+            <div
+              style="
+                font-size:.8rem;
+                color:#64748b;
+                margin-bottom:4px;
+              ">
+
+              Detalhes da venda
+
+            </div>
+
+
+            <h2
+              style="
+                margin:0;
+                color:#0f172a;
+              ">
+
+              ${escapeHTML(
+                sale.number ||
+                "Venda"
+              )}
+
+            </h2>
+
+          </div>
+
+
+          <button
+            id="close-sale-details"
+            type="button"
+            aria-label="Fechar"
+            style="
+              width:38px;
+              height:38px;
+              border:0;
+              border-radius:10px;
+              background:#f1f5f9;
+              color:#334155;
+              font-size:1.2rem;
+              cursor:pointer;
+            ">
+
+            ✕
+
+          </button>
+
+        </div>
+
+
+        <!-- CONTEÚDO -->
+
+        <div
+          style="
+            padding:20px 22px;
+          ">
+
+
+          <!-- INFORMAÇÕES -->
+
+          <div
+            style="
+              display:grid;
+              grid-template-columns:
+                repeat(
+                  auto-fit,
+                  minmax(170px,1fr)
+                );
+              gap:12px;
+              margin-bottom:22px;
+            ">
+
+
+            <div
+              style="
+                padding:14px;
+                background:#f8fafc;
+                border-radius:12px;
+              ">
+
+              <small
+                style="
+                  color:#64748b;
+                ">
+
+                Data
+
+              </small>
+
+
+              <div
+                style="
+                  margin-top:4px;
+                  font-weight:700;
+                  color:#0f172a;
+                ">
+
+                ${dateBR(
+                  sale.createdAt
+                )}
+
+              </div>
+
+            </div>
+
+
+            <div
+              style="
+                padding:14px;
+                background:#f8fafc;
+                border-radius:12px;
+              ">
+
+              <small
+                style="
+                  color:#64748b;
+                ">
+
+                Cliente
+
+              </small>
+
+
+              <div
+                style="
+                  margin-top:4px;
+                  font-weight:700;
+                  color:#0f172a;
+                ">
+
+                ${escapeHTML(
+                  sale.customerName ||
+                  "Cliente balcão"
+                )}
+
+              </div>
+
+            </div>
+
+
+            <div
+              style="
+                padding:14px;
+                background:#f8fafc;
+                border-radius:12px;
+              ">
+
+              <small
+                style="
+                  color:#64748b;
+                ">
+
+                Pagamento
+
+              </small>
+
+
+              <div
+                style="
+                  margin-top:4px;
+                  font-weight:700;
+                  color:#0f172a;
+                ">
+
+                ${escapeHTML(
+                  sale.payment ||
+                  "—"
+                )}
+
+              </div>
+
+            </div>
+
+
+            <div
+              style="
+                padding:14px;
+                background:#f8fafc;
+                border-radius:12px;
+              ">
+
+              <small
+                style="
+                  color:#64748b;
+                ">
+
+                Vendedor
+
+              </small>
+
+
+              <div
+                style="
+                  margin-top:4px;
+                  font-weight:700;
+                  color:#0f172a;
+                ">
+
+                ${escapeHTML(
+                  sale.sellerName ||
+                  "—"
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- PRODUTOS -->
+
+          <div
+            style="
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:15px;
+              margin-bottom:10px;
+            ">
+
+            <h3
+              style="
+                margin:0;
+                color:#0f172a;
+              ">
+
+              Produtos vendidos
+
+            </h3>
+
+
+            ${statusBadge(
+              sale.status
+            )}
+
+          </div>
+
+
+          <div
+            style="
+              overflow-x:auto;
+              border:
+                1px solid #e2e8f0;
+              border-radius:12px;
+            ">
+
+            <table
+              style="
+                width:100%;
+              ">
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    Produto
+                  </th>
+
+                  <th>
+                    Tamanho
+                  </th>
+
+                  <th>
+                    Qtd.
+                  </th>
+
+                  <th>
+                    Unitário
+                  </th>
+
+                  <th>
+                    Subtotal
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody>
+
+                ${itemsMarkup}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+
+          <!-- TOTAIS -->
+
+          <div
+            style="
+              margin-top:20px;
+              margin-left:auto;
+              width:min(100%,360px);
+            ">
+
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                padding:7px 0;
+                color:#475569;
+              ">
+
+              <span>
+                Subtotal
+              </span>
+
+
+              <strong>
+
+                ${money(
+                  sale.subtotal ??
+                  sale.total ??
+                  0
+                )}
+
+              </strong>
+
+            </div>
+
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                padding:7px 0;
+                color:#475569;
+              ">
+
+              <span>
+                Desconto
+              </span>
+
+
+              <strong>
+
+                ${money(
+                  sale.discount ||
+                  0
+                )}
+
+              </strong>
+
+            </div>
+
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                padding:12px 0 0;
+                margin-top:5px;
+                border-top:
+                  1px solid #e2e8f0;
+                color:#0f172a;
+                font-size:1.1rem;
+              ">
+
+              <span>
+                Total
+              </span>
+
+
+              <strong>
+
+                ${money(
+                  sale.total ||
+                  0
+                )}
+
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <!-- BOTÃO -->
+
+          <div
+            style="
+              display:flex;
+              justify-content:flex-end;
+              margin-top:22px;
+            ">
+
+            <button
+              id="close-sale-details-bottom"
+              type="button"
+              class="btn secondary">
+
+              Fechar
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+
+    // =======================================================
+    // FUNDO DO MODAL
+    // =======================================================
+
+    Object.assign(
+      modal.style,
+      {
+
+        position:
+          "fixed",
+
+        inset:
+          "0",
+
+        zIndex:
+          "100000",
+
+        display:
+          "flex",
+
+        alignItems:
+          "center",
+
+        justifyContent:
+          "center",
+
+        padding:
+          "20px",
+
+        background:
+          "rgba(15,23,42,.65)"
+
+      }
+    );
+
+
+    document.body.appendChild(
+      modal
+    );
+
+
+    // =======================================================
+    // FECHAR MODAL
+    // =======================================================
+
+    const close =
+      () => {
+
+        modal.remove();
+
+      };
+
+
+    modal
+      .querySelector(
+        "#close-sale-details"
+      )
+      ?.addEventListener(
+        "click",
+        close
+      );
+
+
+    modal
+      .querySelector(
+        "#close-sale-details-bottom"
+      )
+      ?.addEventListener(
+        "click",
+        close
+      );
+
+
+    modal.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target ===
+          modal
+        ) {
+
+          close();
+
+        }
+      }
+    );
+  }
+
+
+  // =========================================================
+  // CLIQUE NAS VENDAS
+  // =========================================================
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      const target =
+        event.target instanceof Element
+          ? event.target
+          : null;
+
+
+      const saleRow =
+        target?.closest(
+          "[data-sale-id]"
+        );
+
+
+      if (!saleRow) {
+        return;
+      }
+
+
+      openSaleDetails(
+        saleRow.dataset.saleId
+      );
+    }
+  );
+
+
+  // =========================================================
+  // ENTER / ESPAÇO NAS VENDAS
+  // =========================================================
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key !== "Enter" &&
+        event.key !== " "
+      ) {
+        return;
+      }
+
+
+      const target =
+        event.target instanceof Element
+          ? event.target
+          : null;
+
+
+      const saleRow =
+        target?.closest(
+          "[data-sale-id]"
+        );
+
+
+      if (!saleRow) {
+        return;
+      }
+
+
+      event.preventDefault();
+
+
+      openSaleDetails(
+        saleRow.dataset.saleId
+      );
+    }
+  );
 
   function renderPDV() {
     const activeProducts = state.products.filter(p => p.active);
