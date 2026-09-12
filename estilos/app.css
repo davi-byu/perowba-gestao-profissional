@@ -2892,7 +2892,7 @@ tr:last-child td {
 
     /* Mostra aproximadamente 3 produtos no carrinho */
   #cart-lines {
-    max-height: 270px;
+    max-height: 180px;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-right: 4px;
