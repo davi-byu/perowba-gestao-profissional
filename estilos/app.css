@@ -2891,20 +2891,25 @@ tr:last-child td {
   }
 
   /* Mostra aproximadamente 2 itens no carrinho */
-  #cart-lines {
-    max-height: 255px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: auto;
-    touch-action: pan-y;
-    padding-right: 4px;
-  }
-
-  #cart-lines .cart-line {
-    min-height: 118px;
-    touch-action: pan-y;
-  }
+    #cart-lines {
+      height: 236px !important;
+      max-height: 236px !important;
+  
+      overflow-y: auto !important;
+      overflow-x: hidden;
+  
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: auto;
+      touch-action: pan-y;
+  
+      padding-right: 4px;
+    }
+  
+    #cart-lines .cart-line {
+      min-height: 118px;
+      box-sizing: border-box;
+      touch-action: pan-y;
+    }
 
   .product-picker,
   .product-tile {
