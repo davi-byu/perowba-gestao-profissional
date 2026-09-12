@@ -38,6 +38,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app-check.js";
 
 
+// =========================================================
+// MAPA DAS COLEÇÕES
+// =========================================================
+
 const COLLECTION_MAP = {
   products: "produtos",
   customers: "clientes",
@@ -51,6 +55,10 @@ const COLLECTION_MAP = {
 };
 
 
+// =========================================================
+// COLEÇÕES QUE PODEM SER SINCRONIZADAS DIRETAMENTE
+// =========================================================
+
 const DIRECT_SYNC_KEYS = [
   "products",
   "customers",
@@ -63,48 +71,67 @@ const DIRECT_SYNC_KEYS = [
 
 
 // =========================================================
-// COLEÇÕES QUE CADA FUNÇÃO PODE LER
+// PERMISSÕES DE LEITURA POR FUNÇÃO
 // Deve permanecer em conformidade com firestore.rules
 // =========================================================
 
 const canReadCollection = (role, stateKey) => {
 
+  const normalizedRole =
+    String(role || "")
+      .trim()
+      .toLowerCase();
+
+
   // Somente administrador pode consultar auditoria.
   if (stateKey === "audit") {
-    return role === "admin";
+
+    return normalizedRole === "admin";
   }
 
 
-  // Compras não são liberadas para vendedor.
+  // Compras.
   if (stateKey === "purchases") {
+
     return [
       "admin",
       "gerente",
       "estoquista",
       "financeiro"
-    ].includes(role);
+    ].includes(
+      normalizedRole
+    );
   }
 
 
-  // Financeiro não é liberado para vendedor nem estoquista.
+  // Financeiro.
   if (stateKey === "financialEntries") {
+
     return [
       "admin",
       "gerente",
       "financeiro"
-    ].includes(role);
+    ].includes(
+      normalizedRole
+    );
   }
 
 
-  // As demais coleções podem ser lidas por qualquer
-  // usuário ativo da mesma empresa, conforme as regras.
+  // As demais coleções possuem leitura para usuários
+  // ativos pertencentes à mesma empresa.
   return true;
 };
 
 
+// =========================================================
+// FUNÇÕES AUXILIARES
+// =========================================================
+
 const clone = value =>
   JSON.parse(
-    JSON.stringify(value)
+    JSON.stringify(
+      value
+    )
   );
 
 
@@ -113,6 +140,10 @@ const stable = value =>
     value ?? null
   );
 
+
+// =========================================================
+// FIREBASE SERVICE
+// =========================================================
 
 export class FirebaseService {
 
@@ -143,9 +174,14 @@ export class FirebaseService {
 
 
     if (!this.enabled) {
+
       return;
     }
 
+
+    // =======================================================
+    // FIREBASE APP
+    // =======================================================
 
     this.app =
       initializeApp(
@@ -153,17 +189,29 @@ export class FirebaseService {
       );
 
 
+    // =======================================================
+    // AUTHENTICATION
+    // =======================================================
+
     this.auth =
       getAuth(
         this.app
       );
 
 
+    // =======================================================
+    // FIRESTORE
+    // =======================================================
+
     this.db =
       getFirestore(
         this.app
       );
 
+
+    // =======================================================
+    // CLOUD FUNCTIONS
+    // =======================================================
 
     this.functions =
       getFunctions(
@@ -173,11 +221,19 @@ export class FirebaseService {
       );
 
 
+    // =======================================================
+    // STORAGE
+    // =======================================================
+
     this.storage =
       getStorage(
         this.app
       );
 
+
+    // =======================================================
+    // APP CHECK
+    // =======================================================
 
     if (
       settings.appCheckSiteKey
@@ -219,8 +275,10 @@ export class FirebaseService {
   onAuth(callback) {
 
     if (!this.enabled) {
+
       return () => {};
     }
+
 
     return onAuthStateChanged(
       this.auth,
@@ -263,7 +321,9 @@ export class FirebaseService {
   }
 
 
-  async resetPassword(email) {
+  async resetPassword(
+    email
+  ) {
 
     return sendPasswordResetEmail(
       this.auth,
@@ -278,14 +338,32 @@ export class FirebaseService {
 
   async loadProfile(uid) {
 
-    const snapshot =
-      await getDoc(
-        doc(
-          this.db,
-          "usuarios",
-          uid
-        )
+    let snapshot;
+
+
+    try {
+
+      snapshot =
+        await getDoc(
+          doc(
+            this.db,
+            "usuarios",
+            uid
+          )
+        );
+
+    } catch (error) {
+
+      console.error(
+        `ERRO FIRESTORE EM: usuarios/${uid}`,
+        error
       );
+
+
+      throw new Error(
+        `Falha ao carregar perfil do usuário: ${error.message}`
+      );
+    }
 
 
     if (!snapshot.exists()) {
@@ -327,9 +405,13 @@ export class FirebaseService {
         "",
 
       role:
-        data.role ||
-        data.funcao ||
-        "vendedor",
+        String(
+          data.role ||
+          data.funcao ||
+          "vendedor"
+        )
+          .trim()
+          .toLowerCase(),
 
       active:
         data.active ??
@@ -384,6 +466,47 @@ export class FirebaseService {
       profile.companyId;
 
 
+    const role =
+      String(
+        profile.role || ""
+      )
+        .trim()
+        .toLowerCase();
+
+
+    console.log(
+      "======================================="
+    );
+
+    console.log(
+      "PEROWBA - INICIANDO CARREGAMENTO"
+    );
+
+    console.log(
+      "Perfil autenticado:",
+      {
+        uid:
+          profile.id,
+
+        email:
+          profile.email,
+
+        role,
+
+        companyId:
+          this.companyId
+      }
+    );
+
+
+    // =======================================================
+    // CARREGAR EMPRESA
+    // =======================================================
+
+    const companyPath =
+      `empresas/${this.companyId}`;
+
+
     const companyRef =
       doc(
         this.db,
@@ -392,10 +515,38 @@ export class FirebaseService {
       );
 
 
-    const companySnapshot =
-      await getDoc(
-        companyRef
+    let companySnapshot;
+
+
+    try {
+
+      console.log(
+        `Carregando: ${companyPath}`
       );
+
+
+      companySnapshot =
+        await getDoc(
+          companyRef
+        );
+
+
+      console.log(
+        `OK: ${companyPath}`
+      );
+
+    } catch (error) {
+
+      console.error(
+        `ERRO FIRESTORE EM: ${companyPath}`,
+        error
+      );
+
+
+      throw new Error(
+        `Falha ao carregar empresa "${this.companyId}": ${error.message}`
+      );
+    }
 
 
     if (!companySnapshot.exists()) {
@@ -409,6 +560,10 @@ export class FirebaseService {
     const companyData =
       companySnapshot.data();
 
+
+    // =======================================================
+    // ESTADO INICIAL DA EMPRESA
+    // =======================================================
 
     const state = {
 
@@ -449,76 +604,133 @@ export class FirebaseService {
     };
 
 
+    // =======================================================
+    // DEFINIR COLEÇÕES PERMITIDAS
+    // =======================================================
+
+    const permittedCollections =
+      Object.entries(
+        COLLECTION_MAP
+      )
+        .filter(
+          ([stateKey]) =>
+            canReadCollection(
+              role,
+              stateKey
+            )
+        );
+
+
+    console.log(
+      "Coleções que serão carregadas:",
+      permittedCollections.map(
+        (
+          [
+            stateKey,
+            firestoreName
+          ]
+        ) => ({
+          stateKey,
+          firestoreName
+        })
+      )
+    );
+
+
+    // =======================================================
+    // CARREGAR COLEÇÕES UMA POR UMA
+    // =======================================================
+
     const entries =
-      await Promise.all(
+      [];
 
-        Object.entries(
-          COLLECTION_MAP
-        )
-          .filter(
-            ([stateKey]) =>
-              canReadCollection(
-                profile.role,
-                stateKey
+
+    for (
+      const [
+        stateKey,
+        firestoreName
+      ] of permittedCollections
+    ) {
+
+      const path =
+        `empresas/${this.companyId}/${firestoreName}`;
+
+
+      try {
+
+        console.log(
+          `Carregando: ${path}`
+        );
+
+
+        const snapshot =
+          await getDocs(
+            collection(
+              this.db,
+              "empresas",
+              this.companyId,
+              firestoreName
+            )
+          );
+
+
+        const rows =
+          snapshot.docs.map(
+            item => ({
+              id:
+                item.id,
+
+              ...item.data()
+            })
+          );
+
+
+        rows.sort(
+          (a, b) =>
+            String(
+              b.createdAt ||
+              b.updatedAt ||
+              ""
+            ).localeCompare(
+              String(
+                a.createdAt ||
+                a.updatedAt ||
+                ""
               )
-          )
-          .map(
-
-            async (
-              [
-                stateKey,
-                firestoreName
-              ]
-            ) => {
-
-            const snapshot =
-              await getDocs(
-
-                collection(
-                  this.db,
-                  "empresas",
-                  this.companyId,
-                  firestoreName
-                )
-              );
+            )
+        );
 
 
-            const rows =
-              snapshot.docs.map(
-
-                item => ({
-                  id:
-                    item.id,
-
-                  ...item.data()
-                })
-              );
+        console.log(
+          `OK: ${path} (${rows.length} documentos)`
+        );
 
 
-            rows.sort(
-              (a, b) =>
-                String(
-                  b.createdAt ||
-                  b.updatedAt ||
-                  ""
-                ).localeCompare(
-                  String(
-                    a.createdAt ||
-                    a.updatedAt ||
-                    ""
-                  )
-                )
-            );
+        entries.push(
+          [
+            stateKey,
+            rows
+          ]
+        );
+
+      } catch (error) {
+
+        console.error(
+          `ERRO FIRESTORE EM: ${path}`,
+          error
+        );
 
 
-            return [
-              stateKey,
-              rows
-            ];
-          }
-        )
-      );
+        throw new Error(
+          `Falha ao carregar "${firestoreName}": ${error.message}`
+        );
+      }
+    }
 
+
+    // =======================================================
+    // INSERIR RESULTADOS NO ESTADO
+    // =======================================================
 
     for (
       const [
@@ -534,80 +746,118 @@ export class FirebaseService {
 
     // =======================================================
     // CARREGAR USUÁRIOS
+    // SOMENTE ADMIN
     // =======================================================
 
     if (
-      profile.role === "admin"
+      role === "admin"
     ) {
 
-      const userQuery =
-        query(
+      try {
 
-          collection(
-            this.db,
-            "usuarios"
-          ),
-
-          where(
-            "companyId",
-            "==",
-            this.companyId
-          )
+        console.log(
+          "Carregando: usuarios"
         );
 
 
-      const userSnapshot =
-        await getDocs(
-          userQuery
+        const userQuery =
+          query(
+            collection(
+              this.db,
+              "usuarios"
+            ),
+
+            where(
+              "companyId",
+              "==",
+              this.companyId
+            )
+          );
+
+
+        const userSnapshot =
+          await getDocs(
+            userQuery
+          );
+
+
+        state.users =
+          userSnapshot.docs.map(
+            item => {
+
+              const data =
+                item.data();
+
+
+              return {
+
+                id:
+                  item.id,
+
+                name:
+                  data.name ||
+                  data.nome ||
+                  "Usuário",
+
+                email:
+                  data.email ||
+                  "",
+
+                role:
+                  data.role ||
+                  data.funcao ||
+                  "vendedor",
+
+                active:
+                  data.active ??
+                  data.ativo ??
+                  true
+              };
+            }
+          );
+
+
+        console.log(
+          `OK: usuarios (${state.users.length} usuários)`
+        );
+
+      } catch (error) {
+
+        console.error(
+          "ERRO FIRESTORE EM: usuarios",
+          error
         );
 
 
-      state.users =
-        userSnapshot.docs.map(
-
-          item => {
-
-            const data =
-              item.data();
-
-
-            return {
-
-              id:
-                item.id,
-
-              name:
-                data.name ||
-                data.nome ||
-                "Usuário",
-
-              email:
-                data.email ||
-                "",
-
-              role:
-                data.role ||
-                data.funcao ||
-                "vendedor",
-
-              active:
-                data.active ??
-                data.ativo ??
-                true
-            };
-          }
+        throw new Error(
+          `Falha ao carregar "usuarios": ${error.message}`
         );
+      }
 
     } else {
 
-      state.users = [
-        profile
-      ];
+      state.users =
+        [
+          profile
+        ];
     }
 
 
+    // =======================================================
+    // SALVAR SNAPSHOTS
+    // =======================================================
+
     this.captureSnapshots(
       state
+    );
+
+
+    console.log(
+      "PEROWBA - CARREGAMENTO CONCLUÍDO"
+    );
+
+    console.log(
+      "======================================="
     );
 
 
@@ -637,15 +887,15 @@ export class FirebaseService {
 
       this.snapshots[key] =
         new Map(
-
           (
             state[key] ||
             []
           ).map(
-
             item => [
               item.id,
-              clone(item)
+              clone(
+                item
+              )
             ]
           )
         );
@@ -720,7 +970,6 @@ export class FirebaseService {
     ) {
 
       batch.set(
-
         doc(
           this.db,
           "empresas",
@@ -732,7 +981,8 @@ export class FirebaseService {
         ),
 
         {
-          merge: true
+          merge:
+            true
         }
       );
 
@@ -771,12 +1021,15 @@ export class FirebaseService {
       ) {
 
         if (!item?.id) {
+
           continue;
         }
 
 
         if (
-          stable(item) ===
+          stable(
+            item
+          ) ===
           stable(
             previous.get(
               item.id
@@ -789,7 +1042,6 @@ export class FirebaseService {
 
 
         batch.set(
-
           doc(
             this.db,
             "empresas",
@@ -798,10 +1050,13 @@ export class FirebaseService {
             item.id
           ),
 
-          clone(item),
+          clone(
+            item
+          ),
 
           {
-            merge: true
+            merge:
+              true
           }
         );
 
@@ -976,6 +1231,7 @@ export class FirebaseService {
   ) {
 
     if (!file) {
+
       return "";
     }
 
