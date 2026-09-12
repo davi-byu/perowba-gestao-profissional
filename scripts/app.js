@@ -1316,25 +1316,53 @@
           </div>
 
 
-          <!-- BOTÃO -->
+          <!-- BOTÕES -->
 
-          <div
-            style="
-              display:flex;
-              justify-content:flex-end;
-              margin-top:22px;
-            ">
+<div
+  style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:22px;
+  ">
 
-            <button
-              id="close-sale-details-bottom"
-              type="button"
-              class="btn secondary">
+  ${
+    canManage() &&
+    String(
+      sale.status || ""
+    ).toLowerCase() !==
+      "cancelado" &&
+    sale.imported !== true &&
+    sale.id &&
+    cloudEnabled()
 
-              Fechar
+      ? `
+          <button
+            id="cancel-sale-details"
+            type="button"
+            class="btn danger">
 
-            </button>
+            Cancelar venda
 
-          </div>
+          </button>
+        `
+
+      : `<span></span>`
+  }
+
+
+  <button
+    id="close-sale-details-bottom"
+    type="button"
+    class="btn secondary">
+
+    Fechar
+
+  </button>
+
+</div>
 
         </div>
 
@@ -1412,6 +1440,144 @@
       ?.addEventListener(
         "click",
         close
+      );
+      
+        // =======================================================
+    // CANCELAR VENDA
+    // =======================================================
+
+    const cancelSaleButton =
+      modal.querySelector(
+        "#cancel-sale-details"
+      );
+
+
+    cancelSaleButton
+      ?.addEventListener(
+        "click",
+        async () => {
+
+          const reasonInput =
+            window.prompt(
+              `Informe o motivo do cancelamento da venda ${
+                sale.number ||
+                ""
+              }:`
+            );
+
+
+          if (
+            reasonInput === null
+          ) {
+            return;
+          }
+
+
+          const reason =
+            String(
+              reasonInput
+            ).trim();
+
+
+          if (
+            reason.length < 3
+          ) {
+
+            toast(
+              "Informe um motivo válido para o cancelamento."
+            );
+
+            return;
+          }
+
+
+          const confirmed =
+            window.confirm(
+              `Deseja realmente cancelar a venda ${
+                sale.number ||
+                ""
+              }?\n\n` +
+              "Os produtos serão devolvidos ao estoque e o lançamento financeiro será cancelado."
+            );
+
+
+          if (!confirmed) {
+            return;
+          }
+
+
+          cancelSaleButton.disabled =
+            true;
+
+
+          cancelSaleButton.textContent =
+            "Cancelando...";
+
+
+          try {
+
+            const result =
+              await window
+                .firebaseService
+                .cancelSale({
+                  saleId:
+                    sale.id,
+
+                  reason
+                });
+
+
+            await refreshCloudState();
+
+
+            close();
+
+
+            renderRoute();
+
+
+            if (
+              result?.alreadyCancelled
+            ) {
+
+              toast(
+                `Venda ${
+                  sale.number
+                } já estava cancelada.`
+              );
+
+            } else {
+
+              toast(
+                `Venda ${
+                  sale.number
+                } cancelada com sucesso.`
+              );
+            }
+
+
+          } catch (error) {
+
+            console.error(
+              "Erro ao cancelar venda:",
+              error
+            );
+
+
+            cancelSaleButton.disabled =
+              false;
+
+
+            cancelSaleButton.textContent =
+              "Cancelar venda";
+
+
+            toast(
+              error?.message ||
+              "Não foi possível cancelar a venda."
+            );
+          }
+        }
       );
 
 
@@ -8450,28 +8616,20 @@ if (
 
   function renderFinance() {
     const income =
-      state.financialEntries
-        .filter(
-          e =>
-            e.type === "receita"
-        )
-        .reduce(
-          (s,e) =>
-            s + e.amount,
-          0
-        );
+  state.financialEntries
+    .filter(
+      e =>
+        e.type === "receita" &&
+        e.status !== "cancelado"
+    )
 
     const expense =
-      state.financialEntries
-        .filter(
-          e =>
-            e.type === "despesa"
-        )
-        .reduce(
-          (s,e) =>
-            s + e.amount,
-          0
-        );
+  state.financialEntries
+    .filter(
+      e =>
+        e.type === "despesa" &&
+        e.status !== "cancelado"
+    )
 
     $("#content").innerHTML = `
       <div class="grid cards">

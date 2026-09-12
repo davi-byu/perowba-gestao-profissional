@@ -917,6 +917,799 @@ export const finalizarVenda = onCall(
   }
 );
 
+/* =========================================================
+   CANCELAR VENDA
+   ========================================================= */
+
+export const cancelarVenda = onCall(
+  callableOptions,
+  async request => {
+
+    const uid =
+      requireAuth(request);
+
+    const profile =
+      await getProfile(uid);
+
+    // Somente administrador e gerente podem cancelar vendas.
+    requireRole(
+      profile,
+      ["admin", "gerente"]
+    );
+
+
+    const data =
+      request.data || {};
+
+
+    const saleId =
+      String(
+        data.saleId || ""
+      ).trim();
+
+
+    const reason =
+      String(
+        data.reason || ""
+      ).trim();
+
+
+    // =======================================================
+    // VALIDAÇÕES
+    // =======================================================
+
+    if (!saleId) {
+
+      throw new HttpsError(
+        "invalid-argument",
+        "Venda inválida."
+      );
+    }
+
+
+    if (reason.length < 3) {
+
+      throw new HttpsError(
+        "invalid-argument",
+        "Informe o motivo do cancelamento."
+      );
+    }
+
+
+    if (reason.length > 300) {
+
+      throw new HttpsError(
+        "invalid-argument",
+        "O motivo do cancelamento deve ter no máximo 300 caracteres."
+      );
+    }
+
+
+    const companyId =
+      profile.companyId;
+
+
+    const saleRef =
+      db.doc(
+        `empresas/${companyId}/vendas/${saleId}`
+      );
+
+
+    // =======================================================
+    // FINANCEIRO RELACIONADO À VENDA
+    // =======================================================
+
+    const financeSnapshot =
+      await db
+        .collection(
+          `empresas/${companyId}/financeiro`
+        )
+        .where(
+          "relatedId",
+          "==",
+          saleId
+        )
+        .get();
+
+
+    const financeRefs =
+      financeSnapshot.docs.map(
+        document =>
+          document.ref
+      );
+
+
+    const logRef =
+      auditRef(
+        companyId
+      );
+
+
+    // =======================================================
+    // TRANSAÇÃO
+    // =======================================================
+
+    return db.runTransaction(
+      async transaction => {
+
+        const saleSnapshot =
+          await transaction.get(
+            saleRef
+          );
+
+
+        if (!saleSnapshot.exists) {
+
+          throw new HttpsError(
+            "not-found",
+            "Venda não encontrada."
+          );
+        }
+
+
+        const sale =
+          saleSnapshot.data();
+
+
+        const currentStatus =
+          String(
+            sale.status || ""
+          )
+            .trim()
+            .toLowerCase();
+
+
+        // ===================================================
+        // IMPEDE CANCELAMENTO DUPLO
+        // ===================================================
+
+        if (
+          currentStatus ===
+          "cancelado"
+        ) {
+
+          return {
+
+            id:
+              saleId,
+
+            number:
+              sale.number || "",
+
+            status:
+              "cancelado",
+
+            alreadyCancelled:
+              true
+
+          };
+        }
+
+
+        // ===================================================
+        // PROTEÇÃO PARA VENDAS IMPORTADAS
+        // ===================================================
+
+        /*
+         * Vendas antigas importadas não deram baixa no estoque
+         * durante a importação.
+         *
+         * Portanto não podem usar devolução automática.
+         */
+
+        if (
+          sale.imported === true
+        ) {
+
+          throw new HttpsError(
+            "failed-precondition",
+            "Vendas antigas importadas não podem ser canceladas com devolução automática de estoque."
+          );
+        }
+
+
+        // ===================================================
+        // ITENS DA VENDA
+        // ===================================================
+
+        const items =
+          Array.isArray(
+            sale.items
+          )
+            ? sale.items
+            : [];
+
+
+        if (!items.length) {
+
+          throw new HttpsError(
+            "failed-precondition",
+            "Esta venda não possui itens para devolver ao estoque."
+          );
+        }
+
+
+        // ===================================================
+        // AGRUPAR PRODUTO + TAMANHO
+        // ===================================================
+
+        const grouped =
+          new Map();
+
+
+        for (
+          const item
+          of items
+        ) {
+
+          const productId =
+            String(
+              item?.productId || ""
+            ).trim();
+
+
+          if (!productId) {
+
+            throw new HttpsError(
+              "failed-precondition",
+              "A venda possui um item sem produto identificado."
+            );
+          }
+
+
+          const qty =
+            positiveInteger(
+              item?.qty ??
+                item?.quantity,
+              "Quantidade"
+            );
+
+
+          const size =
+            String(
+              item?.size || ""
+            ).trim();
+
+
+          const groupKey =
+            `${productId}::${size}`;
+
+
+          const current =
+            grouped.get(
+              groupKey
+            );
+
+
+          if (current) {
+
+            current.qty +=
+              qty;
+
+          } else {
+
+            grouped.set(
+              groupKey,
+              {
+
+                productId,
+
+                size,
+
+                qty,
+
+                name:
+                  String(
+                    item?.name ||
+                    "Produto"
+                  )
+
+              }
+            );
+          }
+        }
+
+
+        // ===================================================
+        // CARREGAR PRODUTOS
+        // ===================================================
+
+        const productUpdates =
+          new Map();
+
+
+        for (
+          const groupedItem
+          of grouped.values()
+        ) {
+
+          let update =
+            productUpdates.get(
+              groupedItem.productId
+            );
+
+
+          if (!update) {
+
+            const ref =
+              db.doc(
+                `empresas/${companyId}/produtos/${groupedItem.productId}`
+              );
+
+
+            const snapshot =
+              await transaction.get(
+                ref
+              );
+
+
+            if (!snapshot.exists) {
+
+              throw new HttpsError(
+                "not-found",
+                `Produto ${groupedItem.productId} não encontrado para devolver ao estoque.`
+              );
+            }
+
+
+            const product =
+              snapshot.data();
+
+
+            update = {
+
+              ref,
+
+              product,
+
+              productId:
+                groupedItem.productId,
+
+              currentStock:
+                Number(
+                  product.stock || 0
+                ),
+
+              totalQty:
+                0,
+
+              sizes:
+                Array.isArray(
+                  product.sizes
+                )
+                  ? product.sizes.map(
+                      item => ({
+                        ...item
+                      })
+                    )
+                  : [],
+
+              originalSizes:
+                Array.isArray(
+                  product.sizes
+                )
+                  ? product.sizes.map(
+                      item => ({
+                        ...item
+                      })
+                    )
+                  : []
+
+            };
+
+
+            productUpdates.set(
+              groupedItem.productId,
+              update
+            );
+          }
+
+
+          update.totalQty +=
+            groupedItem.qty;
+
+
+          // =================================================
+          // DEVOLVER ESTOQUE DO TAMANHO
+          // =================================================
+
+          if (
+            groupedItem.size
+          ) {
+
+            const sizeIndex =
+              update.sizes.findIndex(
+                item =>
+                  String(
+                    item.size || ""
+                  ).trim() ===
+                  groupedItem.size
+              );
+
+
+            if (
+              sizeIndex < 0
+            ) {
+
+              throw new HttpsError(
+                "failed-precondition",
+                `Tamanho ${groupedItem.size} não encontrado para ${
+                  update.product.name ||
+                  groupedItem.productId
+                }.`
+              );
+            }
+
+
+            update.sizes[
+              sizeIndex
+            ] = {
+
+              ...update.sizes[
+                sizeIndex
+              ],
+
+              stock:
+                Number(
+                  update.sizes[
+                    sizeIndex
+                  ].stock || 0
+                ) +
+                groupedItem.qty
+
+            };
+          }
+        }
+
+
+        const cancelledAt =
+          nowISO();
+
+
+        // ===================================================
+        // ATUALIZAR ESTOQUE DOS PRODUTOS
+        // ===================================================
+
+        for (
+          const update
+          of productUpdates.values()
+        ) {
+
+          const updateData = {
+
+            stock:
+              update.currentStock +
+              update.totalQty,
+
+            updatedAt:
+              cancelledAt
+
+          };
+
+
+          if (
+            Array.isArray(
+              update.product.sizes
+            )
+          ) {
+
+            updateData.sizes =
+              update.sizes;
+          }
+
+
+          transaction.update(
+            update.ref,
+            updateData
+          );
+        }
+
+
+        // ===================================================
+        // REGISTRAR ENTRADAS NO ESTOQUE
+        // ===================================================
+
+        const runningStock =
+          new Map();
+
+
+        const runningSizeStock =
+          new Map();
+
+
+        for (
+          const groupedItem
+          of grouped.values()
+        ) {
+
+          const update =
+            productUpdates.get(
+              groupedItem.productId
+            );
+
+
+          const before =
+            runningStock.has(
+              groupedItem.productId
+            )
+              ? runningStock.get(
+                  groupedItem.productId
+                )
+              : update.currentStock;
+
+
+          const after =
+            before +
+            groupedItem.qty;
+
+
+          runningStock.set(
+            groupedItem.productId,
+            after
+          );
+
+
+          let sizeBefore =
+            null;
+
+
+          let sizeAfter =
+            null;
+
+
+          if (
+            groupedItem.size
+          ) {
+
+            const sizeKey =
+              `${groupedItem.productId}::${groupedItem.size}`;
+
+
+            if (
+              runningSizeStock.has(
+                sizeKey
+              )
+            ) {
+
+              sizeBefore =
+                runningSizeStock.get(
+                  sizeKey
+                );
+
+            } else {
+
+              const originalSize =
+                update.originalSizes.find(
+                  item =>
+                    String(
+                      item.size || ""
+                    ).trim() ===
+                    groupedItem.size
+                );
+
+
+              sizeBefore =
+                Number(
+                  originalSize?.stock ||
+                  0
+                );
+            }
+
+
+            sizeAfter =
+              sizeBefore +
+              groupedItem.qty;
+
+
+            runningSizeStock.set(
+              sizeKey,
+              sizeAfter
+            );
+          }
+
+
+          const movementRef =
+            db
+              .collection(
+                `empresas/${companyId}/movimentacoesEstoque`
+              )
+              .doc();
+
+
+          transaction.set(
+            movementRef,
+            {
+
+              productId:
+                groupedItem.productId,
+
+              productName:
+                update.product.name ||
+                groupedItem.name ||
+                "Produto",
+
+              size:
+                groupedItem.size || "",
+
+              type:
+                "Entrada por cancelamento",
+
+              quantity:
+                groupedItem.qty,
+
+              before,
+
+              after,
+
+              sizeBefore,
+
+              sizeAfter,
+
+              reason:
+                `Cancelamento da venda ${
+                  sale.number ||
+                  saleId
+                }: ${reason}`,
+
+              relatedId:
+                saleId,
+
+              userId:
+                profile.uid,
+
+              userName:
+                profile.name,
+
+              createdAt:
+                cancelledAt,
+
+              serverCreatedAt:
+                FieldValue.serverTimestamp()
+
+            }
+          );
+        }
+
+
+        // ===================================================
+        // CANCELAR LANÇAMENTO FINANCEIRO
+        // ===================================================
+
+        /*
+         * O lançamento não será apagado.
+         * Ele continua no histórico com status cancelado.
+         */
+
+        for (
+          const financeRef
+          of financeRefs
+        ) {
+
+          transaction.set(
+            financeRef,
+            {
+
+              status:
+                "cancelado",
+
+              canceledAt:
+                cancelledAt,
+
+              canceledBy:
+                profile.uid,
+
+              canceledByName:
+                profile.name,
+
+              cancelReason:
+                reason,
+
+              updatedAt:
+                cancelledAt,
+
+              serverUpdatedAt:
+                FieldValue.serverTimestamp()
+
+            },
+            {
+              merge:
+                true
+            }
+          );
+        }
+
+
+        // ===================================================
+        // MARCAR VENDA COMO CANCELADA
+        // ===================================================
+
+        transaction.update(
+          saleRef,
+          {
+
+            status:
+              "cancelado",
+
+            canceledAt:
+              cancelledAt,
+
+            canceledBy:
+              profile.uid,
+
+            canceledByName:
+              profile.name,
+
+            cancelReason:
+              reason,
+
+            updatedAt:
+              cancelledAt,
+
+            serverUpdatedAt:
+              FieldValue.serverTimestamp()
+
+          }
+        );
+
+
+        // ===================================================
+        // AUDITORIA
+        // ===================================================
+
+        transaction.set(
+          logRef,
+          auditData(
+            profile,
+            "CANCELAR",
+            "Venda",
+            `Venda ${
+              sale.number ||
+              saleId
+            } cancelada: ${reason}`
+          )
+        );
+
+
+        // ===================================================
+        // RESULTADO
+        // ===================================================
+
+        return {
+
+          id:
+            saleId,
+
+          number:
+            sale.number || "",
+
+          status:
+            "cancelado",
+
+          restoredItems:
+            [...grouped.values()].map(
+              item => ({
+
+                productId:
+                  item.productId,
+
+                size:
+                  item.size,
+
+                qty:
+                  item.qty
+
+              })
+            ),
+
+          alreadyCancelled:
+            false
+
+        };
+      }
+    );
+  }
+);
+
 
 /* =========================================================
    MOVIMENTAÇÃO DE ESTOQUE

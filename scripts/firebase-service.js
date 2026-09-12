@@ -1234,6 +1234,15 @@ export class FirebaseService {
   }
 
 
+    cancelSale(payload) {
+
+    return this.call(
+      "cancelarVenda",
+      payload
+    );
+  }
+
+
   importOldSales(sales) {
 
     return this.call(
