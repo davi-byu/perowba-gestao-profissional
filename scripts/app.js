@@ -155,6 +155,13 @@
     return ["admin", "gerente", "estoquista"].includes(currentUser?.role);
   }
 
+  function canViewSensitiveValues() {
+    return Boolean(
+      currentUser &&
+      currentUser.role !== "vendedor"
+    );
+  }
+
   function stockStatus(product) {
     if (Number(product.stock) <= 0) return '<span class="badge danger">Sem estoque</span>';
     if (Number(product.stock) <= Number(product.minStock)) return '<span class="badge warning">Estoque baixo</span>';
@@ -260,7 +267,7 @@
       <div class="grid cards">
         ${metricCard("Vendas hoje", money(salesTodayValue), `${todaySales.length} venda(s)`)}
         ${metricCard("Vendas no mês", money(salesMonthValue), `${monthSales.length} venda(s)`)}
-        ${metricCard("Lucro estimado", money(profitMonth), "Mês atual")}
+        ${canViewSensitiveValues() ? metricCard("Lucro estimado", money(profitMonth), "Mês atual") : ""}
         ${metricCard("Ticket médio", money(ticket), "Mês atual")}
       </div>
 
@@ -431,7 +438,7 @@
 
             <div class="summary-list">
               <div class="summary-row"><span>Subtotal</span><strong>${money(cartTotal)}</strong></div>
-              <div class="summary-row"><span>Lucro estimado</span><strong>${money(cartTotal - cartCost)}</strong></div>
+              ${canViewSensitiveValues() ? `<div class="summary-row"><span>Lucro estimado</span><strong>${money(cartTotal - cartCost)}</strong></div>` : ""}
               <div class="summary-row total"><span>Total</span><strong>${money(cartTotal)}</strong></div>
             </div>
 
@@ -3518,7 +3525,10 @@ if (
               </div>
 
               <label>Unidade<select id="product-unit"><option>un</option><option>par</option><option>kg</option><option>cx</option></select></label>
-              <label>Preço de custo*<input id="product-cost" type="number" min="0" step="0.01" required></label>
+              ${canViewSensitiveValues()
+                ? `<label>Preço de custo*<input id="product-cost" type="number" min="0" step="0.01" required></label>`
+                : `<input id="product-cost" type="hidden" value="0">`
+              }
               <label>Preço de venda*<input id="product-price" type="number" min="0" step="0.01" required></label>
               <label>Estoque inicial<input id="product-stock" type="number" min="0" step="1" value="0"></label>
               <label>Estoque mínimo<input id="product-min-stock" type="number" min="0" step="1" value="0"></label>
@@ -3539,7 +3549,10 @@ if (
             <div class="kpi-inline">
               <div><strong>${state.products.length}</strong><span>Produtos cadastrados</span></div>
               <div><strong>${state.products.filter(p => p.active).length}</strong><span>Produtos ativos</span></div>
-              <div><strong>${money(state.products.reduce((sum,p) => sum + p.cost * p.stock,0))}</strong><span>Valor em custo</span></div>
+              ${canViewSensitiveValues()
+                ? `<div><strong>${money(state.products.reduce((sum,p) => sum + p.cost * p.stock,0))}</strong><span>Valor em custo</span></div>`
+                : ""
+              }
               <div><strong>${state.products.filter(p => p.stock <= p.minStock).length}</strong><span>Alertas de estoque</span></div>
             </div>
             <div class="notice" style="margin-top:18px">Cada alteração registra data, usuário e histórico. No ambiente Firebase, o ajuste de estoque deverá ser protegido por transações.</div>
@@ -3657,7 +3670,7 @@ if (
           <th>Produto</th>
           <th>SKU</th>
           <th>Categoria</th>
-          <th>Custo</th>
+          ${canViewSensitiveValues() ? "<th>Custo</th>" : ""}
           <th>Venda</th>
           <th>Estoque</th>
           <th>Status</th>
@@ -3686,7 +3699,7 @@ if (
 
           <td>${escapeHTML(p.category || "—")}</td>
 
-          <td>${money(p.cost)}</td>
+          ${canViewSensitiveValues() ? `<td>${money(p.cost)}</td>` : ""}
 
           <td>${money(p.price)}</td>
 
@@ -3701,7 +3714,7 @@ if (
 
           <td>
             <button
-              class="btn secondary small-btn"
+              class="btn secondary small-btn ${canManage() ? "" : "hidden"}"
               data-edit-product="${p.id}">
               Editar
             </button>
@@ -3713,7 +3726,7 @@ if (
               🖨️ Imprimir etiqueta
             </button>
             <button
-              class="btn warning small-btn"
+              class="btn warning small-btn ${canManage() ? "" : "hidden"}"
               data-toggle-product="${p.id}">
               ${p.active ? "Desativar" : "Ativar"}
             </button>
@@ -5681,6 +5694,12 @@ if (
         btn.addEventListener(
           "click",
           () => {
+            if (!canManage()) {
+              return toast(
+                "Seu perfil não pode editar produtos."
+              );
+            }
+
             const p =
               state.products.find(
                 item =>
@@ -7660,11 +7679,14 @@ if (
             "Exclui canceladas"
           )}
 
-          ${metricCard(
-            "Lucro estimado",
-            money(profit),
-            "Antes das despesas gerais"
-          )}
+          ${canViewSensitiveValues()
+            ? metricCard(
+                "Lucro estimado",
+                money(profit),
+                "Antes das despesas gerais"
+              )
+            : ""
+          }
         </div>
 
         <article
@@ -7719,7 +7741,7 @@ if (
                 "Subtotal",
                 "Desconto",
                 "Total",
-                "Lucro",
+                ...(canViewSensitiveValues() ? ["Lucro"] : []),
                 "Status"
               ],
 
@@ -7733,7 +7755,7 @@ if (
                   s.subtotal,
                   s.discount,
                   s.total,
-                  s.profit,
+                  ...(canViewSensitiveValues() ? [s.profit] : []),
                   s.status
                 ]
               )
@@ -7752,7 +7774,7 @@ if (
                 "SKU",
                 "Produto",
                 "Categoria",
-                "Custo",
+                ...(canViewSensitiveValues() ? ["Custo"] : []),
                 "Preco",
                 "Estoque",
                 "Minimo",
@@ -7764,7 +7786,7 @@ if (
                   p.sku,
                   p.name,
                   p.category,
-                  p.cost,
+                  ...(canViewSensitiveValues() ? [p.cost] : []),
                   p.price,
                   p.stock,
                   p.minStock,
