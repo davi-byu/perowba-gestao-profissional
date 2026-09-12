@@ -2854,3 +2854,39 @@ tr:last-child td {
   }
 
 }
+
+/* =========================================================
+   PDV MOBILE - CARRINHO NO TOPO
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .pdv-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Permite reorganizar os elementos internos do PDV */
+  .pdv-layout>section {
+    display: contents;
+  }
+
+  /* 1º - Carrinho */
+  .pdv-layout>aside.card {
+    order: 1;
+  }
+
+  /* 2º - Pesquisa + botão da câmera */
+  .pdv-section-actions {
+    order: 2;
+  }
+
+  /* Atalhos F2/F4/F8/F10 não são úteis no celular */
+  .pdv-shortcuts-hint {
+    display: none;
+  }
+
+  /* 3º - Produtos */
+  .product-picker {
+    order: 3;
+  }
+}
