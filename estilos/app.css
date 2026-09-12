@@ -2880,7 +2880,7 @@ tr:last-child td {
     order: 2;
   }
 
-  /* Atalhos F2/F4/F8/F10 não são úteis no celular */
+  /* Atalhos não são úteis no celular */
   .pdv-shortcuts-hint {
     display: none;
   }
@@ -2890,11 +2890,24 @@ tr:last-child td {
     order: 3;
   }
 
-    /* Mostra aproximadamente 3 produtos no carrinho */
+  /* Mostra aproximadamente 2 itens no carrinho */
   #cart-lines {
-    max-height: 180px;
+    max-height: 255px;
     overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
     padding-right: 4px;
+  }
+
+  #cart-lines .cart-line {
+    min-height: 118px;
+    touch-action: pan-y;
+  }
+
+  .product-picker,
+  .product-tile {
+    touch-action: pan-y;
   }
 }
