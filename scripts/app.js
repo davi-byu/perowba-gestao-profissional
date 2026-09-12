@@ -2475,13 +2475,10 @@
         );
 
 
-        if (
-  !window.__perowbaCameraContinuousMode
-) {
-  renderPDV();
-}
+        renderPDV();
 
-return true;
+
+        return true;
       };
 
     // =======================================================
@@ -2929,9 +2926,6 @@ if (
 
         cameraReadLocked =
           true;
-        
-    window.__perowbaCameraContinuousMode =
-  false;    
 
 
         await stopCameraScanner();
@@ -2965,7 +2959,6 @@ if (
             `;
         }
 
-        renderPDV();
 
         setTimeout(
           () => {
@@ -3046,23 +3039,15 @@ if (
         // Bloqueia leituras repetidas assim que encontramos
         // um produto válido.
         cameraReadLocked =
-  true;
+          true;
 
-window.__perowbaCameraContinuousMode =
-  true;
 
-addScannedProduct(
-  product
-);
+        await closeCameraModal();
 
-// Libera a câmera para ler o próximo produto.
-setTimeout(
-  () => {
-    cameraReadLocked =
-      false;
-  },
-  700
-);
+
+        addScannedProduct(
+          product
+        );
       };
 
 
@@ -3084,9 +3069,6 @@ setTimeout(
         cameraScannerStarting =
           true;
 
-        window.__perowbaCameraContinuousMode =
-          false;
-        
         cameraReadLocked =
           false;
 
@@ -3303,9 +3285,6 @@ setTimeout(
 
 
     // Mantém o campo pronto para receber o leitor.
-
-    renderPDV();
-
     setTimeout(
       () => {
         $("#pdv-search")
