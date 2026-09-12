@@ -209,10 +209,205 @@
     renderers[currentRoute]?.();
   }
 
+  let improvementsNoticeShown = false;
+
+  function showImprovementsNotice() {
+
+    if (improvementsNoticeShown) {
+      return;
+    }
+
+    const now =
+      new Date();
+
+    const start =
+      new Date(
+        "2026-09-12T00:00:00-03:00"
+      );
+
+    const end =
+      new Date(
+        "2026-09-19T00:00:00-03:00"
+      );
+
+    if (
+      now < start ||
+      now >= end
+    ) {
+      return;
+    }
+
+    improvementsNoticeShown =
+      true;
+
+    if (
+      document.querySelector(
+        "#system-updates-modal"
+      )
+    ) {
+      return;
+    }
+
+    const modal =
+      document.createElement(
+        "div"
+      );
+
+    modal.id =
+      "system-updates-modal";
+
+    modal.setAttribute(
+      "role",
+      "dialog"
+    );
+
+    modal.setAttribute(
+      "aria-modal",
+      "true"
+    );
+
+    modal.innerHTML = `
+      <div style="
+        width:min(92vw,520px);
+        max-height:90vh;
+        overflow:auto;
+        background:#ffffff;
+        border-radius:18px;
+        padding:24px;
+        box-shadow:0 24px 70px rgba(15,23,42,.28);
+      ">
+
+        <div style="
+          font-size:2rem;
+          margin-bottom:8px;
+        ">
+          🚀
+        </div>
+
+        <h2 style="
+          margin:0 0 8px;
+          color:#0f172a;
+        ">
+          Novidades no Perowba Gest&atilde;o
+        </h2>
+
+        <p style="
+          margin:0 0 18px;
+          color:#475569;
+          line-height:1.55;
+        ">
+          Fizemos novas melhorias para deixar o sistema
+          mais seguro, organizado e profissional.
+        </p>
+
+        <div style="
+          display:grid;
+          gap:10px;
+          color:#334155;
+          line-height:1.45;
+        ">
+
+          <div>
+            ✅ Painel do vendedor focado nas vendas do dia atual.
+          </div>
+
+          <div>
+            ✅ Relat&oacute;rios do vendedor limitados &agrave;s vendas do dia.
+          </div>
+
+          <div>
+            ✅ Custos e lucros protegidos para o perfil vendedor.
+          </div>
+
+          <div>
+            ✅ Cadastro de Novo Produto removido do vendedor.
+          </div>
+
+          <div>
+            ✅ Produtos e vendas com carregamento mais seguro.
+          </div>
+
+          <div>
+            ✅ Melhorias nas permiss&otilde;es e seguran&ccedil;a do sistema.
+          </div>
+
+        </div>
+
+        <button
+          id="close-system-updates"
+          type="button"
+          style="
+            width:100%;
+            margin-top:22px;
+            border:0;
+            border-radius:12px;
+            padding:13px 18px;
+            background:#0f172a;
+            color:#ffffff;
+            font-size:1rem;
+            font-weight:700;
+            cursor:pointer;
+          ">
+          Entendi
+        </button>
+
+      </div>
+    `;
+
+    Object.assign(
+      modal.style,
+      {
+        position:
+          "fixed",
+
+        inset:
+          "0",
+
+        zIndex:
+          "99999",
+
+        display:
+          "flex",
+
+        alignItems:
+          "center",
+
+        justifyContent:
+          "center",
+
+        padding:
+          "20px",
+
+        background:
+          "rgba(15,23,42,.65)"
+      }
+    );
+
+    document.body.appendChild(
+      modal
+    );
+
+    document
+      .querySelector(
+        "#close-system-updates"
+      )
+      ?.addEventListener(
+        "click",
+        () =>
+          modal.remove()
+      );
+  }
+
+
   function showApp() {
   $("#loading-screen")?.classList.add("hidden");
   $("#login-screen")?.classList.add("hidden");
   $("#app-shell")?.classList.remove("hidden");
+
+  setTimeout(
+    showImprovementsNotice,
+    350
+  );
 
   $("#brand-company").textContent =
     state.settings.companyName;
