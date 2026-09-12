@@ -254,7 +254,15 @@
     const salesMonthValue = monthSales.reduce((sum, s) => sum + s.total, 0);
     const profitMonth = monthSales.reduce((sum, s) => sum + (s.profit || 0), 0);
     const lowStock = state.products.filter(p => p.active && p.stock <= p.minStock);
-    const ticket = monthSales.length ? salesMonthValue / monthSales.length : 0;
+    const ticketMonth =
+      monthSales.length
+        ? salesMonthValue / monthSales.length
+        : 0;
+
+    const ticketToday =
+      todaySales.length
+        ? salesTodayValue / todaySales.length
+        : 0;
 
     const productTotals = {};
     activeSales.forEach(sale => sale.items.forEach(item => {
@@ -266,9 +274,37 @@
     $("#content").innerHTML = `
       <div class="grid cards">
         ${metricCard("Vendas hoje", money(salesTodayValue), `${todaySales.length} venda(s)`)}
-        ${metricCard("Vendas no mês", money(salesMonthValue), `${monthSales.length} venda(s)`)}
-        ${canViewSensitiveValues() ? metricCard("Lucro estimado", money(profitMonth), "Mês atual") : ""}
-        ${metricCard("Ticket médio", money(ticket), "Mês atual")}
+
+        ${currentUser?.role !== "vendedor"
+          ? metricCard(
+              "Vendas no mês",
+              money(salesMonthValue),
+              `${monthSales.length} venda(s)`
+            )
+          : ""
+        }
+
+        ${canViewSensitiveValues()
+          ? metricCard(
+              "Lucro estimado",
+              money(profitMonth),
+              "Mês atual"
+            )
+          : ""
+        }
+
+        ${currentUser?.role === "vendedor"
+          ? metricCard(
+              "Ticket médio hoje",
+              money(ticketToday),
+              "Dia atual"
+            )
+          : metricCard(
+              "Ticket médio",
+              money(ticketMonth),
+              "Mês atual"
+            )
+        }
       </div>
 
       <div class="grid two" style="margin-top:18px">
