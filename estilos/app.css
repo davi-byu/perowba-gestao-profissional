@@ -2889,4 +2889,12 @@ tr:last-child td {
   .product-picker {
     order: 3;
   }
+
+    /* Mostra aproximadamente 3 produtos no carrinho */
+  #cart-lines {
+    max-height: 270px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+  }
 }
