@@ -379,8 +379,7 @@ export class FirebaseService {
 
 
     if (
-      data.active === false ||
-      data.ativo === false
+      data.active !== true
     ) {
 
       throw new Error(
@@ -414,20 +413,17 @@ export class FirebaseService {
           .toLowerCase(),
 
       active:
-        data.active ??
-        data.ativo ??
-        true,
+        data.active === true,
 
       companyId:
-        data.companyId ||
-        data.empresaId
+        data.companyId
     };
 
 
     if (!profile.companyId) {
 
       throw new Error(
-        "O perfil não possui empresaId/companyId."
+        "O perfil não possui companyId."
       );
     }
 
@@ -809,9 +805,7 @@ export class FirebaseService {
                   "vendedor",
 
                 active:
-                  data.active ??
-                  data.ativo ??
-                  true
+                  data.active === true
               };
             }
           );

@@ -68,8 +68,8 @@ async function getProfile(uid) {
     name: data.name || data.nome || "Usuário",
     email: data.email || "",
     role: data.role || data.funcao || "vendedor",
-    companyId: data.companyId || data.empresaId,
-    active: data.active ?? data.ativo ?? true
+    companyId: data.companyId,
+    active: data.active === true
   };
 
   if (!profile.active) {
@@ -1690,8 +1690,7 @@ onCall(
 
 
               const existingCompanyId =
-                profileData.companyId ||
-                profileData.empresaId;
+                profileData.companyId;
 
 
               if (
@@ -1977,8 +1976,7 @@ onCall(
 
 
           const recoveredCompanyId =
-            profileData.companyId ||
-            profileData.empresaId;
+            profileData.companyId;
 
 
           if (
@@ -2107,9 +2105,7 @@ onCall(
             "profile-exists",
 
           companyId:
-            profileData.companyId ||
-            profileData.empresaId ||
-            null,
+            profileData.companyId || null,
 
           message:
             "O cadastro possui perfil e não foi removido."
@@ -2424,10 +2420,7 @@ onCall(
 
 
     if (
-      (
-        target.companyId ||
-        target.empresaId
-      ) !== profile.companyId
+      target.companyId !== profile.companyId
     ) {
       throw new HttpsError(
         "permission-denied",
