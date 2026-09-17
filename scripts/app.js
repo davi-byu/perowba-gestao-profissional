@@ -4375,6 +4375,127 @@ if (
     renderPDV();
   }
 
+  function showSaleLoading() {
+
+    let overlay =
+      document.getElementById(
+        "sale-loading-overlay"
+      );
+
+    if (overlay) {
+      return overlay;
+    }
+
+    overlay =
+      document.createElement(
+        "div"
+      );
+
+    overlay.id =
+      "sale-loading-overlay";
+
+    overlay.innerHTML = `
+      <div style="
+        width:min(320px, calc(100vw - 40px));
+        background:#ffffff;
+        border-radius:18px;
+        padding:28px 24px;
+        box-shadow:0 20px 60px rgba(15,23,42,.28);
+        text-align:center;
+      ">
+
+        <div
+          class="sale-loading-spinner"
+          style="
+            width:44px;
+            height:44px;
+            margin:0 auto 18px;
+            border:4px solid #e2e8f0;
+            border-top-color:#2563eb;
+            border-radius:50%;
+            animation:saleLoadingSpin .8s linear infinite;
+          ">
+        </div>
+
+        <strong style="
+          display:block;
+          font-size:1.05rem;
+          color:#0f172a;
+          margin-bottom:6px;
+        ">
+          Finalizando venda...
+        </strong>
+
+        <span style="
+          display:block;
+          font-size:.9rem;
+          color:#64748b;
+        ">
+          Aguarde um momento
+        </span>
+
+      </div>
+    `;
+
+    Object.assign(
+      overlay.style,
+      {
+        position: "fixed",
+        inset: "0",
+        zIndex: "200000",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+        background: "rgba(15,23,42,.45)",
+        backdropFilter: "blur(2px)"
+      }
+    );
+
+    if (
+      !document.getElementById(
+        "sale-loading-style"
+      )
+    ) {
+
+      const style =
+        document.createElement(
+          "style"
+        );
+
+      style.id =
+        "sale-loading-style";
+
+      style.textContent = `
+        @keyframes saleLoadingSpin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `;
+
+      document.head.appendChild(
+        style
+      );
+    }
+
+    document.body.appendChild(
+      overlay
+    );
+
+    return overlay;
+  }
+
+
+  function hideSaleLoading() {
+
+    document
+      .getElementById(
+        "sale-loading-overlay"
+      )
+      ?.remove();
+  }
+
   async function finishSaleCloud() {
     if (!state.cart.length) {
       return toast("Adicione pelo menos um produto.");
@@ -4387,6 +4508,15 @@ if (
       return toast("O desconto não pode ser maior que o valor da venda.");
     }
 
+    if (
+      document.getElementById(
+        "sale-loading-overlay"
+      )
+    ) {
+      return;
+    }
+
+    showSaleLoading();
     try {
       const result = await window.firebaseService.finalizeSale({
         items: state.cart.map(item => ({
@@ -4419,6 +4549,8 @@ if (
         error.message ||
         "Não foi possível finalizar a venda."
       );
+    } finally {
+      hideSaleLoading();
     }
   }
 
