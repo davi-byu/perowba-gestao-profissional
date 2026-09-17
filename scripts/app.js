@@ -4695,6 +4695,109 @@ if (
     );
   }
 
+  function showSaleError(
+    message = "Não foi possível concluir a venda."
+  ) {
+
+    document
+      .getElementById(
+        "sale-error-overlay"
+      )
+      ?.remove();
+
+    const overlay =
+      document.createElement(
+        "div"
+      );
+
+    overlay.id =
+      "sale-error-overlay";
+
+    overlay.innerHTML = `
+      <div style="
+        width:min(350px, calc(100vw - 40px));
+        background:#ffffff;
+        border-radius:20px;
+        padding:30px 24px;
+        box-shadow:0 20px 60px rgba(15,23,42,.28);
+        text-align:center;
+      ">
+
+        <div style="
+          width:68px;
+          height:68px;
+          margin:0 auto 18px;
+          border-radius:50%;
+          background:#ef4444;
+          color:#ffffff;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:40px;
+          font-weight:700;
+          line-height:1;
+        ">
+          ×
+        </div>
+
+        <strong style="
+          display:block;
+          color:#991b1b;
+          font-size:1.2rem;
+          margin-bottom:8px;
+        ">
+          Venda não finalizada
+        </strong>
+
+        <span
+          id="sale-error-message"
+          style="
+            display:block;
+            color:#475569;
+            font-size:.95rem;
+            line-height:1.4;
+          ">
+        </span>
+
+      </div>
+    `;
+
+    Object.assign(
+      overlay.style,
+      {
+        position: "fixed",
+        inset: "0",
+        zIndex: "220000",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+        background: "rgba(127,29,29,.35)"
+      }
+    );
+
+    const messageElement =
+      overlay.querySelector(
+        "#sale-error-message"
+      );
+
+    if (messageElement) {
+      messageElement.textContent =
+        String(message);
+    }
+
+    document.body.appendChild(
+      overlay
+    );
+
+    setTimeout(
+      () => {
+        overlay.remove();
+      },
+      3500
+    );
+  }
+
   async function finishSaleCloud() {
     if (!state.cart.length) {
       return toast("Adicione pelo menos um produto.");
@@ -4754,9 +4857,17 @@ if (
       renderPDV();
 
     } catch (error) {
+
+      const errorMessage =
+        error?.message ||
+        "Não foi possível finalizar a venda.";
+
+      showSaleError(
+        errorMessage
+      );
+
       toast(
-        error.message ||
-        "Não foi possível finalizar a venda."
+        errorMessage
       );
     } finally {
       hideSaleLoading();
