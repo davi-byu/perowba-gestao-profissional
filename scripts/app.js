@@ -10571,7 +10571,7 @@ if (
 
             } catch (error) {
               $("#login-error").textContent =
-                "Não foi possível entrar. Verifique o e-mail, a senha e o cadastro do usuário.";
+                `Erro de login: ${error?.code || "sem-codigo"} - ${error?.message || "erro desconhecido"}`;
             }
 
             return;
