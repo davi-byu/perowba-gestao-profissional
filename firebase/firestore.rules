@@ -334,7 +334,7 @@ service cloud.firestore {
           ||
           (
             activeUser()
-            && hasRole(['admin'])
+            && hasRole(['admin', 'gerente'])
             && resource.data.companyId
               == userDoc().data.companyId
           )
@@ -355,7 +355,7 @@ service cloud.firestore {
       */
 
       allow list: if activeUser()
-        && hasRole(['admin'])
+        && hasRole(['admin', 'gerente'])
         && resource.data.companyId
           == userDoc().data.companyId;
 

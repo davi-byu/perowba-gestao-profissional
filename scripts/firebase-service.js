@@ -807,7 +807,7 @@ export class FirebaseService {
     // =======================================================
 
     if (
-      role === "admin"
+      ["admin", "gerente"].includes(role)
     ) {
 
       try {
@@ -1307,6 +1307,15 @@ export class FirebaseService {
 
 
   // =========================================================
+  resetUserPassword(payload) {
+
+    return this.call(
+      "redefinirSenhaUsuario",
+      payload
+    );
+  }
+
+
   // IMAGENS DOS PRODUTOS
   // =========================================================
 

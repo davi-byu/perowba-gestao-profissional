@@ -3282,6 +3282,157 @@ onCall(
 
 
 /* =========================================================
+   REDEFINIR SENHA DO USU?RIO
+   ========================================================= */
+
+export const redefinirSenhaUsuario =
+onCall(
+  callableOptions,
+  async request => {
+
+    const uid =
+      requireAuth(request);
+
+    const profile =
+      await getProfile(uid);
+
+    requireRole(
+      profile,
+      ["admin", "gerente"]
+    );
+
+    const targetUid =
+      String(
+        request.data?.uid || ""
+      ).trim();
+
+    const password =
+      String(
+        request.data?.password || ""
+      );
+
+    if (!targetUid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Usu?rio n?o informado."
+      );
+    }
+
+    if (targetUid === uid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Use a recupera??o de senha para alterar sua pr?pria senha."
+      );
+    }
+
+    if (password.length < 6) {
+      throw new HttpsError(
+        "invalid-argument",
+        "A nova senha deve possuir pelo menos 6 caracteres."
+      );
+    }
+
+    const targetRef =
+      db.doc(
+        `usuarios/${targetUid}`
+      );
+
+    const targetSnapshot =
+      await targetRef.get();
+
+    if (!targetSnapshot.exists) {
+      throw new HttpsError(
+        "not-found",
+        "Usu?rio n?o encontrado."
+      );
+    }
+
+    const target =
+      targetSnapshot.data();
+
+    const targetCompanyId =
+      target.companyId ||
+      target.empresaId;
+
+    const targetRole =
+      target.role ||
+      target.funcao ||
+      "";
+
+    if (
+      targetCompanyId !==
+      profile.companyId
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "Usu?rio pertence a outra empresa."
+      );
+    }
+
+    let allowedRoles = [];
+
+    if (profile.role === "admin") {
+
+      allowedRoles = [
+        "gerente",
+        "vendedor",
+        "estoquista",
+        "financeiro"
+      ];
+
+    } else if (
+      profile.role === "gerente"
+    ) {
+
+      allowedRoles = [
+        "vendedor",
+        "estoquista",
+        "financeiro"
+      ];
+    }
+
+    if (
+      !allowedRoles.includes(
+        targetRole
+      )
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "Voc? n?o tem permiss?o para redefinir a senha deste usu?rio."
+      );
+    }
+
+    await auth.updateUser(
+      targetUid,
+      {
+        password
+      }
+    );
+
+    await auditRef(
+      profile.companyId
+    ).set(
+      auditData(
+        profile,
+        "REDEFINIR_SENHA",
+        "Usu?rio",
+        `${
+          target.name ||
+          target.nome ||
+          target.email ||
+          targetUid
+        }`
+      )
+    );
+
+    return {
+      success: true,
+      uid: targetUid
+    };
+  }
+);
+
+/* =========================================================
    IMPORTAR VENDAS ANTIGAS
    ========================================================= */
 

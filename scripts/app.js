@@ -73,7 +73,7 @@
     caixa: ["admin", "gerente", "vendedor", "financeiro"],
     financeiro: ["admin", "gerente", "financeiro"],
     relatorios: ["admin", "gerente", "vendedor", "estoquista", "financeiro"],
-    usuarios: ["admin"],
+    usuarios: ["admin", "gerente"],
     auditoria: ["admin"],
     configuracoes: ["admin"]
   };
@@ -9819,91 +9819,234 @@ if (
   }
 
   function renderUsers() {
-    $("#content").innerHTML = `
-      <div class="grid two">
-        <article class="card">
-          <div class="card-header">
-            <h2>Novo usuário</h2>
+
+    const isAdmin =
+      currentUser?.role === "admin";
+
+    const isManager =
+      currentUser?.role === "gerente";
+
+
+    const canResetUserPassword =
+      user => {
+
+        if (
+          !user ||
+          user.id === currentUser?.id
+        ) {
+          return false;
+        }
+
+        if (isAdmin) {
+          return [
+            "gerente",
+            "vendedor",
+            "estoquista",
+            "financeiro"
+          ].includes(
+            user.role
+          );
+        }
+
+        if (isManager) {
+          return [
+            "vendedor",
+            "estoquista",
+            "financeiro"
+          ].includes(
+            user.role
+          );
+        }
+
+        return false;
+      };
+
+
+    const renderUserActions =
+      user => {
+
+        const actions = [];
+
+        if (isAdmin) {
+
+          actions.push(`
+            <button
+              class="btn warning small-btn"
+              data-toggle-user="${user.id}"
+              ${user.id === currentUser.id
+                ? "disabled"
+                : ""
+              }>
+
+              ${user.active
+                ? "Desativar"
+                : "Ativar"
+              }
+            </button>
+          `);
+        }
+
+        if (
+          canResetUserPassword(
+            user
+          )
+        ) {
+
+          actions.push(`
+            <button
+              class="btn small-btn"
+              type="button"
+              data-reset-user="${user.id}">
+              Redefinir senha
+            </button>
+          `);
+        }
+
+        if (!actions.length) {
+          return `
+            <span
+              style="color:#64748b">
+              —
+            </span>
+          `;
+        }
+
+        return `
+          <div
+            style="
+              display:flex;
+              gap:8px;
+              flex-wrap:wrap;
+            ">
+            ${actions.join("")}
           </div>
+        `;
+      };
 
-          <div class="card-body">
-            <div
-              class="warning-box"
-              style="margin-bottom:16px">
 
-              Com o Firebase ativado, a conta é criada no Authentication por uma Cloud Function. A senha nunca é salva no Firestore.
+    const adminPanel =
+      isAdmin
+        ? `
+          <article class="card">
+            <div class="card-header">
+              <h2>Novo usuário</h2>
             </div>
 
-            <form
-              id="user-form"
-              class="form-grid two-columns">
+            <div class="card-body">
 
-              <label>
-                Nome
-                <input
-                  id="user-name"
-                  required>
-              </label>
+              <div
+                class="warning-box"
+                style="margin-bottom:16px">
 
-              <label>
-                E-mail
-                <input
-                  id="user-email"
-                  type="email"
-                  required>
-              </label>
-
-              <label>
-                Senha temporária
-                <input
-                  id="user-password"
-                  type="password"
-                  minlength="6"
-                  required>
-              </label>
-
-              <label>
-                Função
-                <select id="user-role">
-                  <option value="admin">
-                    Administrador
-                  </option>
-
-                  <option value="gerente">
-                    Gerente
-                  </option>
-
-                  <option value="vendedor">
-                    Vendedor
-                  </option>
-
-                  <option value="estoquista">
-                    Estoquista
-                  </option>
-
-                  <option value="financeiro">
-                    Financeiro
-                  </option>
-                </select>
-              </label>
-
-              <div class="form-actions">
-                <button
-                  class="btn primary"
-                  type="submit">
-                  Criar usuário
-                </button>
+                Com o Firebase ativado, a conta é criada
+                no Authentication por uma Cloud Function.
+                A senha nunca é salva no Firestore.
               </div>
-            </form>
-          </div>
-        </article>
+
+              <form
+                id="user-form"
+                class="form-grid two-columns">
+
+                <label>
+                  Nome
+                  <input
+                    id="user-name"
+                    required>
+                </label>
+
+                <label>
+                  E-mail
+                  <input
+                    id="user-email"
+                    type="email"
+                    required>
+                </label>
+
+                <label>
+                  Senha temporária
+                  <input
+                    id="user-password"
+                    type="password"
+                    minlength="6"
+                    required>
+                </label>
+
+                <label>
+                  Função
+
+                  <select id="user-role">
+
+                    <option value="admin">
+                      Administrador
+                    </option>
+
+                    <option value="gerente">
+                      Gerente
+                    </option>
+
+                    <option value="vendedor">
+                      Vendedor
+                    </option>
+
+                    <option value="estoquista">
+                      Estoquista
+                    </option>
+
+                    <option value="financeiro">
+                      Financeiro
+                    </option>
+
+                  </select>
+                </label>
+
+                <div class="form-actions">
+                  <button
+                    class="btn primary"
+                    type="submit">
+                    Criar usuário
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </article>
+        `
+        : `
+          <article class="card">
+
+            <div class="card-header">
+              <h2>Gerenciamento de usuários</h2>
+            </div>
+
+            <div class="card-body">
+
+              <div class="warning-box">
+                Como gerente, você pode redefinir
+                a senha de vendedores, estoquistas
+                e usuários do financeiro da sua empresa.
+                Criação, ativação e desativação de contas
+                permanecem exclusivas do administrador.
+              </div>
+
+            </div>
+          </article>
+        `;
+
+
+    $("#content").innerHTML = `
+
+      <div class="grid two">
+
+        ${adminPanel}
 
         <article class="card">
+
           <div class="card-header">
             <h2>Permissões resumidas</h2>
           </div>
 
           <div class="card-body">
+
             <p>
               <strong>Administrador:</strong>
               acesso total.
@@ -9911,26 +10054,33 @@ if (
 
             <p>
               <strong>Gerente:</strong>
-              produtos, compras, estoque, caixa e relatórios.
+              produtos, compras, estoque,
+              caixa e relatórios.
             </p>
 
             <p>
               <strong>Vendedor:</strong>
-              vendas, clientes e consulta de produtos.
+              vendas, clientes e consulta
+              de produtos.
             </p>
 
             <p>
               <strong>Estoquista:</strong>
-              entradas, inventários e movimentações.
+              entradas, inventários
+              e movimentações.
             </p>
 
             <p>
               <strong>Financeiro:</strong>
-              pagamentos, despesas e relatórios financeiros.
+              pagamentos, despesas
+              e relatórios financeiros.
             </p>
+
           </div>
         </article>
+
       </div>
+
 
       <article
         class="card"
@@ -9941,60 +10091,178 @@ if (
         </div>
 
         <div class="table-wrap">
+
           <table>
+
             <thead>
               <tr>
                 <th>Nome</th>
                 <th>E-mail</th>
                 <th>Função</th>
                 <th>Status</th>
-                <th>Ação</th>
+                <th>Ações</th>
               </tr>
             </thead>
 
             <tbody>
+
               ${state.users
                 .map(
-                  u =>
+                  user =>
                     `<tr>
-                      <td>${escapeHTML(u.name)}</td>
-                      <td>${escapeHTML(u.email)}</td>
-                      <td>${escapeHTML(u.role)}</td>
 
                       <td>
-                        ${u.active
+                        ${escapeHTML(
+                          user.name
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          user.email
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          user.role
+                        )}
+                      </td>
+
+                      <td>
+                        ${user.active
                           ? statusBadge("ativo")
                           : statusBadge("inativo")
                         }
                       </td>
 
                       <td>
-                        <button
-                          class="btn warning small-btn"
-                          data-toggle-user="${u.id}"
-                          ${u.id === currentUser.id ? "disabled" : ""}>
-
-                          ${u.active
-                            ? "Desativar"
-                            : "Ativar"
-                          }
-                        </button>
+                        ${renderUserActions(
+                          user
+                        )}
                       </td>
+
                     </tr>`
                 )
                 .join("")}
+
             </tbody>
+
           </table>
+
         </div>
       </article>
+
+
+      <dialog
+        id="reset-password-dialog"
+        style="
+          border:0;
+          border-radius:16px;
+          padding:0;
+          width:min(92vw,440px);
+          box-shadow:0 24px 70px rgba(15,23,42,.28);
+        ">
+
+        <form
+          id="reset-password-form"
+          style="
+            padding:24px;
+            display:grid;
+            gap:16px;
+          ">
+
+          <div>
+
+            <h2
+              style="
+                margin:0 0 6px;
+              ">
+              Redefinir senha
+            </h2>
+
+            <p
+              id="reset-password-user"
+              style="
+                margin:0;
+                color:#64748b;
+              ">
+            </p>
+
+          </div>
+
+          <input
+            id="reset-password-target"
+            type="hidden">
+
+          <label>
+            Nova senha
+
+            <input
+              id="reset-password-new"
+              type="password"
+              minlength="6"
+              autocomplete="new-password"
+              required>
+          </label>
+
+          <label>
+            Confirmar nova senha
+
+            <input
+              id="reset-password-confirm"
+              type="password"
+              minlength="6"
+              autocomplete="new-password"
+              required>
+          </label>
+
+          <div
+            style="
+              display:flex;
+              justify-content:flex-end;
+              gap:10px;
+              flex-wrap:wrap;
+            ">
+
+            <button
+              id="cancel-reset-password"
+              class="btn"
+              type="button">
+              Cancelar
+            </button>
+
+            <button
+              id="confirm-reset-password"
+              class="btn primary"
+              type="submit">
+              Salvar nova senha
+            </button>
+
+          </div>
+
+        </form>
+
+      </dialog>
     `;
 
-    $("#user-form")
-      .addEventListener(
+
+    const userForm =
+      $("#user-form");
+
+    if (userForm) {
+
+      userForm.addEventListener(
         "submit",
         async event => {
 
           event.preventDefault();
+
+          if (!isAdmin) {
+            return toast(
+              "Somente administradores podem criar usuários."
+            );
+          }
 
           const email =
             $("#user-email")
@@ -10004,8 +10272,8 @@ if (
 
           if (
             state.users.some(
-              u =>
-                u.email.toLowerCase() ===
+              user =>
+                user.email.toLowerCase() ===
                 email
             )
           ) {
@@ -10015,9 +10283,12 @@ if (
           }
 
           if (cloudEnabled()) {
+
             try {
+
               await window.firebaseService
                 .createUser({
+
                   name:
                     $("#user-name")
                       .value
@@ -10043,6 +10314,7 @@ if (
               renderUsers();
 
             } catch (error) {
+
               toast(
                 error.message ||
                 "Não foi possível criar o usuário."
@@ -10052,7 +10324,9 @@ if (
             return;
           }
 
+
           const user = {
+
             id:
               uid("usr"),
 
@@ -10100,25 +10374,40 @@ if (
           renderUsers();
         }
       );
+    }
+
 
     $$("[data-toggle-user]")
       .forEach(
-        btn =>
-          btn.addEventListener(
+        button =>
+          button.addEventListener(
             "click",
             async () => {
 
+              if (!isAdmin) {
+                return toast(
+                  "Somente administradores podem alterar o status de usuários."
+                );
+              }
+
               const user =
                 state.users.find(
-                  u =>
-                    u.id ===
-                    btn.dataset.toggleUser
+                  item =>
+                    item.id ===
+                    button.dataset.toggleUser
                 );
 
+              if (!user) {
+                return;
+              }
+
               if (cloudEnabled()) {
+
                 try {
+
                   await window.firebaseService
                     .setUserActive({
+
                       uid:
                         user.id,
 
@@ -10135,6 +10424,7 @@ if (
                   renderUsers();
 
                 } catch (error) {
+
                   toast(
                     error.message ||
                     "Não foi possível alterar o usuário."
@@ -10143,6 +10433,7 @@ if (
 
                 return;
               }
+
 
               user.active =
                 !user.active;
@@ -10162,6 +10453,203 @@ if (
               renderUsers();
             }
           )
+      );
+
+
+    const resetDialog =
+      $("#reset-password-dialog");
+
+    const resetForm =
+      $("#reset-password-form");
+
+
+    $$("[data-reset-user]")
+      .forEach(
+        button =>
+          button.addEventListener(
+            "click",
+            () => {
+
+              const user =
+                state.users.find(
+                  item =>
+                    item.id ===
+                    button.dataset.resetUser
+                );
+
+              if (
+                !user ||
+                !canResetUserPassword(
+                  user
+                )
+              ) {
+
+                return toast(
+                  "Você não possui permissão para redefinir a senha deste usuário."
+                );
+              }
+
+              $("#reset-password-target")
+                .value =
+                  user.id;
+
+              $("#reset-password-user")
+                .textContent =
+                  `${user.name} • ${user.role}`;
+
+              $("#reset-password-new")
+                .value =
+                  "";
+
+              $("#reset-password-confirm")
+                .value =
+                  "";
+
+              resetDialog.showModal();
+
+              setTimeout(
+                () =>
+                  $("#reset-password-new")
+                    ?.focus(),
+                0
+              );
+            }
+          )
+      );
+
+
+    $("#cancel-reset-password")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          resetDialog.close();
+        }
+      );
+
+
+    resetForm
+      ?.addEventListener(
+        "submit",
+        async event => {
+
+          event.preventDefault();
+
+          const targetUid =
+            $("#reset-password-target")
+              .value;
+
+          const password =
+            $("#reset-password-new")
+              .value;
+
+          const confirmation =
+            $("#reset-password-confirm")
+              .value;
+
+          const user =
+            state.users.find(
+              item =>
+                item.id === targetUid
+            );
+
+
+          if (
+            !user ||
+            !canResetUserPassword(
+              user
+            )
+          ) {
+
+            return toast(
+              "Você não possui permissão para redefinir a senha deste usuário."
+            );
+          }
+
+
+          if (
+            password.length < 6
+          ) {
+
+            return toast(
+              "A nova senha deve possuir pelo menos 6 caracteres."
+            );
+          }
+
+
+          if (
+            password !== confirmation
+          ) {
+
+            return toast(
+              "As senhas não coincidem."
+            );
+          }
+
+
+          if (!cloudEnabled()) {
+
+            return toast(
+              "A redefinição administrativa de senha exige conexão com o Firebase."
+            );
+          }
+
+
+          const submitButton =
+            $("#confirm-reset-password");
+
+          const originalText =
+            submitButton.textContent;
+
+          submitButton.disabled =
+            true;
+
+          submitButton.textContent =
+            "Salvando...";
+
+
+          try {
+
+            await window.firebaseService
+              .resetUserPassword({
+
+                uid:
+                  user.id,
+
+                password
+              });
+
+
+            $("#reset-password-new")
+              .value =
+                "";
+
+            $("#reset-password-confirm")
+              .value =
+                "";
+
+            resetDialog.close();
+
+            toast(
+              "Senha redefinida com sucesso."
+            );
+
+          } catch (error) {
+
+            toast(
+              error.message ||
+              "Não foi possível redefinir a senha."
+            );
+
+          } finally {
+
+            submitButton.disabled =
+              false;
+
+            submitButton.textContent =
+              originalText;
+          }
+        }
       );
   }
 

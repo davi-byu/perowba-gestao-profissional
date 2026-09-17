@@ -19,17 +19,14 @@
   --sidebar: #0f172a;
   --sidebar-soft: #1e293b;
 
-  --shadow:
-    0 6px 22px rgba(15, 23, 42, 0.06);
+  --shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
 
-  --shadow-hover:
-    0 10px 30px rgba(15, 23, 42, 0.10);
+  --shadow-hover: 0 10px 30px rgba(15, 23, 42, 0.1);
 
   --radius: 14px;
 
   --sidebar-width: 205px;
 }
-
 
 /* =========================================================
    RESET
@@ -82,7 +79,6 @@ button {
   display: none !important;
 }
 
-
 /* =========================================================
    TELA DE CARREGAMENTO
    ========================================================= */
@@ -103,12 +99,16 @@ button {
   padding: 24px;
 
   background:
-    radial-gradient(circle at 20% 20%,
+    radial-gradient(
+      circle at 20% 20%,
       rgba(20, 184, 166, 0.12),
-      transparent 32%),
-    radial-gradient(circle at 80% 80%,
-      rgba(14, 116, 144, 0.10),
-      transparent 34%),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(14, 116, 144, 0.1),
+      transparent 34%
+    ),
     #f1f5f9;
 }
 
@@ -126,8 +126,7 @@ button {
   border: 1px solid rgba(219, 227, 238, 0.9);
   border-radius: 18px;
 
-  box-shadow:
-    0 22px 55px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.12);
 
   text-align: center;
 }
@@ -164,7 +163,6 @@ button {
   }
 }
 
-
 /* =========================================================
    LOGIN E CADASTRO
    ========================================================= */
@@ -178,12 +176,16 @@ button {
   padding: 24px;
 
   background:
-    radial-gradient(circle at 20% 20%,
+    radial-gradient(
+      circle at 20% 20%,
       rgba(20, 184, 166, 0.24),
-      transparent 30%),
-    radial-gradient(circle at 80% 80%,
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
       rgba(14, 116, 144, 0.22),
-      transparent 32%),
+      transparent 32%
+    ),
     #0f172a;
 }
 
@@ -195,15 +197,13 @@ button {
 
   background: var(--surface);
 
-  border:
-    1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 
   border-radius: 22px;
 
   padding: 30px;
 
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
 }
 
 .login-card h1 {
@@ -220,7 +220,6 @@ button {
 #register-area h1 {
   margin-top: 24px;
 }
-
 
 /* =========================================================
    MARCA
@@ -274,17 +273,12 @@ button {
   font-size: 0.82rem;
   font-weight: 800;
 
-  background:
-    linear-gradient(135deg,
-      #14b8a6,
-      #0e7490);
+  background: linear-gradient(135deg, #14b8a6, #0e7490);
 
   color: #ffffff;
 
-  box-shadow:
-    0 5px 14px rgba(20, 184, 166, 0.22);
+  box-shadow: 0 5px 14px rgba(20, 184, 166, 0.22);
 }
-
 
 /* =========================================================
    APP PRINCIPAL
@@ -297,12 +291,10 @@ button {
 
   display: grid;
 
-  grid-template-columns:
-    var(--sidebar-width) minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 
   background: var(--bg);
 }
-
 
 /* =========================================================
    SIDEBAR
@@ -317,8 +309,7 @@ button {
   display: flex;
   flex-direction: column;
 
-  padding:
-    0 12px 14px;
+  padding: 0 12px 14px;
 
   background: var(--sidebar);
 
@@ -363,8 +354,7 @@ button {
 
   gap: 9px;
 
-  padding:
-    8px 10px;
+  padding: 8px 10px;
 
   color: #cbd5e1;
 
@@ -424,7 +414,6 @@ button {
   font-size: 0.72rem;
 }
 
-
 /* =========================================================
    ÁREA PRINCIPAL
    ========================================================= */
@@ -436,7 +425,6 @@ button {
 
   background: var(--bg);
 }
-
 
 /* =========================================================
    TOPBAR
@@ -450,14 +438,11 @@ button {
 
   gap: 16px;
 
-  padding:
-    14px 24px;
+  padding: 14px 24px;
 
-  background:
-    rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.96);
 
-  border-bottom:
-    1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 
   position: sticky;
   top: 0;
@@ -475,8 +460,7 @@ button {
 }
 
 .topbar p {
-  margin:
-    3px 0 0;
+  margin: 3px 0 0;
 
   color: var(--muted);
 
@@ -500,8 +484,7 @@ button {
   width: 38px;
   height: 38px;
 
-  border:
-    1px solid var(--border);
+  border: 1px solid var(--border);
 
   background: var(--surface);
 
@@ -512,7 +495,6 @@ button {
   color: var(--text);
 }
 
-
 /* =========================================================
    CONTEÚDO
    ========================================================= */
@@ -520,12 +502,10 @@ button {
 .content {
   width: 100%;
 
-  padding:
-    20px 24px 28px;
+  padding: 20px 24px 28px;
 
   margin: 0 auto;
 }
-
 
 /* =========================================================
    GRIDS
@@ -537,23 +517,16 @@ button {
 }
 
 .grid.cards {
-  grid-template-columns:
-    repeat(4,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .grid.two {
-  grid-template-columns:
-    repeat(2,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .grid.three {
-  grid-template-columns:
-    repeat(3,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-
 
 /* =========================================================
    CARDS
@@ -564,8 +537,7 @@ button {
 
   background: var(--surface);
 
-  border:
-    1px solid var(--border);
+  border: 1px solid var(--border);
 
   border-radius: var(--radius);
 
@@ -589,11 +561,9 @@ button {
 .card-header {
   min-height: 50px;
 
-  padding:
-    13px 16px;
+  padding: 13px 16px;
 
-  border-bottom:
-    1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 
   display: flex;
   align-items: center;
@@ -611,7 +581,6 @@ button {
   font-weight: 750;
 }
 
-
 /* =========================================================
    MÉTRICAS
    ========================================================= */
@@ -619,8 +588,7 @@ button {
 .metric {
   min-height: 104px;
 
-  padding:
-    16px 17px;
+  padding: 16px 17px;
 
   position: relative;
 
@@ -640,8 +608,7 @@ button {
   right: -18px;
   top: -22px;
 
-  background:
-    rgba(15, 118, 110, 0.07);
+  background: rgba(15, 118, 110, 0.07);
 }
 
 .metric-label {
@@ -678,7 +645,6 @@ button {
   font-size: 0.68rem;
 }
 
-
 /* =========================================================
    AÇÕES
    ========================================================= */
@@ -692,7 +658,6 @@ button {
   margin-bottom: 14px;
 }
 
-
 /* =========================================================
    FORMULÁRIOS
    ========================================================= */
@@ -700,9 +665,7 @@ button {
 .form-grid {
   display: grid;
 
-  grid-template-columns:
-    repeat(3,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
   gap: 13px;
 }
@@ -712,9 +675,7 @@ button {
 }
 
 .form-grid.two-columns {
-  grid-template-columns:
-    repeat(2,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 label {
@@ -735,13 +696,11 @@ textarea {
 
   min-height: 40px;
 
-  border:
-    1px solid var(--border);
+  border: 1px solid var(--border);
 
   border-radius: 9px;
 
-  padding:
-    8px 10px;
+  padding: 8px 10px;
 
   color: var(--text);
 
@@ -764,8 +723,7 @@ select:focus,
 textarea:focus {
   border-color: var(--primary-light);
 
-  box-shadow:
-    0 0 0 3px rgba(20, 184, 166, 0.12);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
 }
 
 .form-actions {
@@ -806,7 +764,6 @@ textarea:focus {
   color: var(--danger);
 }
 
-
 /* =========================================================
    BOTÕES
    ========================================================= */
@@ -816,11 +773,9 @@ textarea:focus {
 
   border-radius: 9px;
 
-  border:
-    1px solid transparent;
+  border: 1px solid transparent;
 
-  padding:
-    8px 12px;
+  padding: 8px 12px;
 
   font-size: 0.78rem;
   font-weight: 700;
@@ -891,12 +846,10 @@ textarea:focus {
 .btn.small-btn {
   min-height: 30px;
 
-  padding:
-    5px 9px;
+  padding: 5px 9px;
 
   font-size: 0.7rem;
 }
-
 
 /* =========================================================
    TABELAS
@@ -920,11 +873,9 @@ table {
 
 th,
 td {
-  padding:
-    11px 12px;
+  padding: 11px 12px;
 
-  border-bottom:
-    1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 
   text-align: left;
 
@@ -944,8 +895,7 @@ th {
 }
 
 tbody tr {
-  transition:
-    background 0.12s ease;
+  transition: background 0.12s ease;
 }
 
 tbody tr:hover {
@@ -955,7 +905,6 @@ tbody tr:hover {
 tr:last-child td {
   border-bottom: 0;
 }
-
 
 /* =========================================================
    BADGES
@@ -967,8 +916,7 @@ tr:last-child td {
 
   min-height: 23px;
 
-  padding:
-    3px 8px;
+  padding: 3px 8px;
 
   border-radius: 999px;
 
@@ -1000,14 +948,12 @@ tr:last-child td {
   color: #155e75;
 }
 
-
 /* =========================================================
    ESTADO VAZIO
    ========================================================= */
 
 .empty-state {
-  padding:
-    34px 18px;
+  padding: 34px 18px;
 
   text-align: center;
 
@@ -1015,7 +961,6 @@ tr:last-child td {
 
   font-size: 0.78rem;
 }
-
 
 /* =========================================================
    GRÁFICOS DE BARRAS
@@ -1058,12 +1003,8 @@ tr:last-child td {
 
   border-radius: inherit;
 
-  background:
-    linear-gradient(90deg,
-      #0f766e,
-      #14b8a6);
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
 }
-
 
 /* =========================================================
    PDV
@@ -1072,8 +1013,7 @@ tr:last-child td {
 .pdv-layout {
   display: grid;
 
-  grid-template-columns:
-    minmax(0, 1.4fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
 
   gap: 14px;
 }
@@ -1081,16 +1021,13 @@ tr:last-child td {
 .product-picker {
   display: grid;
 
-  grid-template-columns:
-    repeat(3,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
   gap: 10px;
 }
 
 .product-tile {
-  border:
-    1px solid var(--border);
+  border: 1px solid var(--border);
 
   background: var(--surface);
 
@@ -1108,8 +1045,7 @@ tr:last-child td {
 .product-tile:hover {
   border-color: var(--primary-light);
 
-  box-shadow:
-    0 5px 18px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
 }
 
 .product-tile strong,
@@ -1125,7 +1061,6 @@ tr:last-child td {
   margin-top: 4px;
 }
 
-
 /* =========================================================
    CARRINHO
    ========================================================= */
@@ -1133,18 +1068,15 @@ tr:last-child td {
 .cart-line {
   display: grid;
 
-  grid-template-columns:
-    1fr auto auto;
+  grid-template-columns: 1fr auto auto;
 
   gap: 8px;
 
   align-items: center;
 
-  padding:
-    10px 0;
+  padding: 10px 0;
 
-  border-bottom:
-    1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .cart-line:last-child {
@@ -1173,12 +1105,10 @@ tr:last-child td {
 
   border-radius: 7px;
 
-  border:
-    1px solid var(--border);
+  border: 1px solid var(--border);
 
   background: #ffffff;
 }
-
 
 /* =========================================================
    RESUMOS
@@ -1189,8 +1119,7 @@ tr:last-child td {
 
   gap: 9px;
 
-  margin:
-    16px 0;
+  margin: 16px 0;
 }
 
 .summary-row {
@@ -1208,18 +1137,15 @@ tr:last-child td {
 
   padding-top: 11px;
 
-  border-top:
-    1px solid var(--border);
+  border-top: 1px solid var(--border);
 }
-
 
 /* =========================================================
    AVISOS
    ========================================================= */
 
 .notice {
-  padding:
-    12px 14px;
+  padding: 12px 14px;
 
   border-radius: 10px;
 
@@ -1227,15 +1153,13 @@ tr:last-child td {
 
   color: #155e75;
 
-  border:
-    1px solid #a5f3fc;
+  border: 1px solid #a5f3fc;
 
   font-size: 0.78rem;
 }
 
 .warning-box {
-  padding:
-    12px 14px;
+  padding: 12px 14px;
 
   border-radius: 10px;
 
@@ -1243,12 +1167,10 @@ tr:last-child td {
 
   color: #9a3412;
 
-  border:
-    1px solid #fed7aa;
+  border: 1px solid #fed7aa;
 
   font-size: 0.78rem;
 }
-
 
 /* =========================================================
    ABAS
@@ -1265,15 +1187,13 @@ tr:last-child td {
 }
 
 .tab-btn {
-  border:
-    1px solid var(--border);
+  border: 1px solid var(--border);
 
   background: var(--surface);
 
   border-radius: 999px;
 
-  padding:
-    7px 11px;
+  padding: 7px 11px;
 
   font-size: 0.75rem;
 }
@@ -1283,7 +1203,6 @@ tr:last-child td {
 
   color: #ffffff;
 }
-
 
 /* =========================================================
    KPI INLINE
@@ -1313,7 +1232,6 @@ tr:last-child td {
   font-size: 0.72rem;
 }
 
-
 /* =========================================================
    TOAST
    ========================================================= */
@@ -1324,12 +1242,9 @@ tr:last-child td {
   right: 20px;
   bottom: 20px;
 
-  max-width:
-    min(390px,
-      calc(100vw - 40px));
+  max-width: min(390px, calc(100vw - 40px));
 
-  padding:
-    12px 15px;
+  padding: 12px 15px;
 
   border-radius: 11px;
 
@@ -1339,15 +1254,13 @@ tr:last-child td {
 
   box-shadow: var(--shadow-hover);
 
-  transform:
-    translateY(24px);
+  transform: translateY(24px);
 
   opacity: 0;
 
   pointer-events: none;
 
-  transition:
-    0.25s ease;
+  transition: 0.25s ease;
 
   z-index: 10000;
 
@@ -1360,62 +1273,47 @@ tr:last-child td {
   opacity: 1;
 }
 
-
 /* =========================================================
    DESKTOP GRANDE
    ========================================================= */
 
 @media (min-width: 1500px) {
-
   :root {
     --sidebar-width: 220px;
   }
 
   .content {
-    padding:
-      22px 28px 32px;
+    padding: 22px 28px 32px;
   }
 
   .metric {
     min-height: 110px;
   }
-
 }
-
 
 /* =========================================================
    NOTEBOOK / TABLET GRANDE
    ========================================================= */
 
 @media (max-width: 1150px) {
-
   .grid.cards {
-    grid-template-columns:
-      repeat(2,
-        minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .grid.three {
-    grid-template-columns:
-      repeat(2,
-        minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .product-picker {
-    grid-template-columns:
-      repeat(2,
-        minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
-
 
 /* =========================================================
    TABLET / MENU MÓVEL
    ========================================================= */
 
 @media (max-width: 900px) {
-
   .app-shell {
     grid-template-columns: 1fr;
   }
@@ -1428,11 +1326,9 @@ tr:last-child td {
 
     width: 230px;
 
-    transition:
-      left 0.25s ease;
+    transition: left 0.25s ease;
 
-    box-shadow:
-      16px 0 40px rgba(0, 0, 0, 0.22);
+    box-shadow: 16px 0 40px rgba(0, 0, 0, 0.22);
   }
 
   .sidebar.open {
@@ -1449,30 +1345,23 @@ tr:last-child td {
   }
 
   .form-grid {
-    grid-template-columns:
-      repeat(2,
-        minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
-
 
 /* =========================================================
    CELULAR
    ========================================================= */
 
 @media (max-width: 650px) {
-
   .content {
-    padding:
-      14px;
+    padding: 14px;
   }
 
   .topbar {
     min-height: 68px;
 
-    padding:
-      12px 14px;
+    padding: 12px 14px;
 
     gap: 10px;
   }
@@ -1509,32 +1398,26 @@ tr:last-child td {
 
     border-radius: 18px;
 
-    max-height:
-      calc(100vh - 28px);
+    max-height: calc(100vh - 28px);
   }
 
   .cart-line {
-    grid-template-columns:
-      1fr auto;
+    grid-template-columns: 1fr auto;
   }
 
-  .cart-line>strong {
+  .cart-line > strong {
     grid-column: 2;
     grid-row: 1 / span 2;
   }
-
 }
-
 
 /* =========================================================
    TELAS MUITO PEQUENAS
    ========================================================= */
 
 @media (max-width: 420px) {
-
   .topbar {
-    padding:
-      10px 12px;
+    padding: 10px 12px;
   }
 
   .content {
@@ -1546,8 +1429,7 @@ tr:last-child td {
   }
 
   .card-header {
-    padding:
-      12px 14px;
+    padding: 12px 14px;
   }
 
   .metric {
@@ -1561,7 +1443,6 @@ tr:last-child td {
   .login-card {
     padding: 20px;
   }
-
 }
 /* ===== PDV CAMERA SCANNER ===== */
 
@@ -1715,13 +1596,9 @@ tr:last-child td {
 
   background: #ffffff;
 
-  box-shadow:
-    0 16px 40px
-    rgba(15, 23, 42, 0.22);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
 
-  transform:
-    translate(-50%, -25px)
-    scale(0.96);
+  transform: translate(-50%, -25px) scale(0.96);
 
   opacity: 0;
 
@@ -1732,15 +1609,11 @@ tr:last-child td {
     transform 0.2s ease;
 }
 
-
 .pdv-scan-feedback.show {
-  transform:
-    translate(-50%, 0)
-    scale(1);
+  transform: translate(-50%, 0) scale(1);
 
   opacity: 1;
 }
-
 
 .pdv-scan-feedback-icon {
   flex: 0 0 auto;
@@ -1761,7 +1634,6 @@ tr:last-child td {
   font-weight: 800;
 }
 
-
 .pdv-scan-feedback-text {
   display: flex;
   flex-direction: column;
@@ -1769,7 +1641,6 @@ tr:last-child td {
 
   min-width: 0;
 }
-
 
 .pdv-scan-feedback-text strong {
   overflow: hidden;
@@ -1782,21 +1653,17 @@ tr:last-child td {
   white-space: nowrap;
 }
 
-
 .pdv-scan-feedback-text span {
   color: #64748b;
 
   font-size: 0.82rem;
 }
 
-
 @media (max-width: 700px) {
-
   .pdv-scan-feedback {
     top: 12px;
 
-    width:
-      calc(100vw - 24px);
+    width: calc(100vw - 24px);
 
     min-width: 0;
   }
@@ -1810,22 +1677,18 @@ tr:last-child td {
   align-items: center;
   gap: 8px 14px;
 
-  margin:
-    8px 0
-    14px;
+  margin: 8px 0 14px;
 
   font-size: 0.8rem;
 
   color: #64748b;
 }
 
-
 .pdv-shortcuts-hint span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
-
 
 .pdv-shortcuts-hint kbd {
   display: inline-flex;
@@ -1834,12 +1697,9 @@ tr:last-child td {
 
   min-width: 31px;
 
-  padding:
-    3px 6px;
+  padding: 3px 6px;
 
-  border:
-    1px solid
-    #cbd5e1;
+  border: 1px solid #cbd5e1;
 
   border-radius: 6px;
 
@@ -1851,14 +1711,10 @@ tr:last-child td {
   font-size: 0.72rem;
   font-weight: 700;
 
-  box-shadow:
-    0 1px 1px
-    rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.08);
 }
 
-
 @media (max-width: 700px) {
-
   .pdv-shortcuts-hint {
     display: none;
   }
@@ -1913,19 +1769,16 @@ tr:last-child td {
   gap: 8px;
 }
 
-
 .product-barcode-label {
   font-size: 0.9rem;
   font-weight: 600;
 }
-
 
 .barcode-mode-options {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
 }
-
 
 .barcode-mode-options label {
   display: inline-flex;
@@ -1941,12 +1794,10 @@ tr:last-child td {
   cursor: pointer;
 }
 
-
 .barcode-mode-options input[type="radio"] {
   width: auto;
   margin: 0;
 }
-
 
 .barcode-input-row {
   display: flex;
@@ -1954,24 +1805,20 @@ tr:last-child td {
   gap: 8px;
 }
 
-
 .barcode-input-row input {
   flex: 1;
   min-width: 0;
 }
-
 
 .barcode-input-row button {
   flex: 0 0 auto;
   white-space: nowrap;
 }
 
-
 .product-barcode-field input[readonly] {
   background: #f8fafc;
   cursor: default;
 }
-
 
 .barcode-help {
   color: #64748b;
@@ -1979,9 +1826,7 @@ tr:last-child td {
   line-height: 1.35;
 }
 
-
 @media (max-width: 700px) {
-
   .barcode-input-row {
     flex-direction: column;
   }
@@ -2025,7 +1870,6 @@ tr:last-child td {
   backdrop-filter: blur(3px);
 }
 
-
 .barcode-print-dialog {
   width: min(560px, 100%);
   max-height: calc(100vh - 40px);
@@ -2036,11 +1880,8 @@ tr:last-child td {
 
   background: #fff;
 
-  box-shadow:
-    0 24px 60px
-    rgba(15, 23, 42, 0.28);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
 }
-
 
 .barcode-print-header {
   display: flex;
@@ -2053,13 +1894,11 @@ tr:last-child td {
   border-bottom: 1px solid #e5e7eb;
 }
 
-
 .barcode-print-header h3 {
   margin: 0;
 
   font-size: 1.15rem;
 }
-
 
 .barcode-print-header p {
   margin: 5px 0 0;
@@ -2068,7 +1907,6 @@ tr:last-child td {
 
   font-size: 0.85rem;
 }
-
 
 .barcode-print-close {
   width: 36px;
@@ -2095,16 +1933,13 @@ tr:last-child td {
   cursor: pointer;
 }
 
-
 .barcode-print-close:hover {
   background: #e2e8f0;
 }
 
-
 #barcode-print-form {
   padding: 20px 22px 22px;
 }
-
 
 .barcode-print-grid {
   display: grid;
@@ -2112,7 +1947,6 @@ tr:last-child td {
 
   gap: 16px;
 }
-
 
 .barcode-print-grid > label {
   display: flex;
@@ -2125,12 +1959,10 @@ tr:last-child td {
   font-weight: 600;
 }
 
-
 .barcode-print-grid input,
 .barcode-print-grid select {
   width: 100%;
 }
-
 
 .barcode-print-checkbox {
   grid-column: 1 / -1;
@@ -2148,13 +1980,11 @@ tr:last-child td {
   cursor: pointer;
 }
 
-
 .barcode-print-checkbox input {
   width: auto;
 
   margin: 0;
 }
-
 
 .barcode-print-preview-info {
   margin-top: 16px;
@@ -2172,7 +2002,6 @@ tr:last-child td {
   word-break: break-all;
 }
 
-
 .barcode-print-actions {
   display: flex;
   justify-content: flex-end;
@@ -2181,44 +2010,31 @@ tr:last-child td {
   margin-top: 20px;
 }
 
-
 @media (max-width: 600px) {
-
   .barcode-print-modal {
     padding: 10px;
   }
 
-
   .barcode-print-dialog {
-    max-height:
-      calc(100vh - 20px);
+    max-height: calc(100vh - 20px);
 
-    border-radius:
-      13px;
+    border-radius: 13px;
   }
-
 
   .barcode-print-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
-
 
   .barcode-print-checkbox {
-    grid-column:
-      auto;
+    grid-column: auto;
   }
-
 
   .barcode-print-actions {
-    flex-direction:
-      column-reverse;
+    flex-direction: column-reverse;
   }
 
-
   .barcode-print-actions .btn {
-    width:
-      100%;
+    width: 100%;
   }
 }
 
@@ -2231,8 +2047,7 @@ tr:last-child td {
 
   display: grid;
 
-  grid-template-columns:
-    minmax(0, 1.55fr) minmax(340px, 0.75fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.75fr);
 
   gap: 16px;
 
@@ -2243,48 +2058,42 @@ tr:last-child td {
   border-radius: 22px;
 
   background:
-    radial-gradient(circle at 15% 0%,
+    radial-gradient(
+      circle at 15% 0%,
       rgba(14, 165, 233, 0.16),
-      transparent 30%),
-    radial-gradient(circle at 100% 100%,
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 100% 100%,
       rgba(20, 184, 166, 0.12),
-      transparent 34%),
-    linear-gradient(145deg,
-      #07111f,
-      #0b1728 55%,
-      #0e1c2d);
+      transparent 34%
+    ),
+    linear-gradient(145deg, #07111f, #0b1728 55%, #0e1c2d);
 
-  box-shadow:
-    0 26px 65px rgba(15, 23, 42, 0.20);
+  box-shadow: 0 26px 65px rgba(15, 23, 42, 0.2);
 
   overflow: hidden;
 }
-
 
 /* =========================================================
    ÁREA ESQUERDA DO PDV
    ========================================================= */
 
-.pdv-layout>section {
+.pdv-layout > section {
   min-width: 0;
 
   padding: 16px;
 
-  border:
-    1px solid rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.15);
 
   border-radius: 17px;
 
-  background:
-    rgba(15, 31, 48, 0.82);
+  background: rgba(15, 31, 48, 0.82);
 
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 
-  backdrop-filter:
-    blur(14px);
+  backdrop-filter: blur(14px);
 }
-
 
 /* =========================================================
    PESQUISA DO PDV
@@ -2297,291 +2106,219 @@ tr:last-child td {
 .pdv-search-row {
   padding: 8px;
 
-  border:
-    1px solid rgba(56, 189, 248, 0.20);
+  border: 1px solid rgba(56, 189, 248, 0.2);
 
   border-radius: 14px;
 
-  background:
-    rgba(2, 12, 27, 0.72);
+  background: rgba(2, 12, 27, 0.72);
 
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 .pdv-search-row #pdv-search {
   min-height: 50px;
 
-  border:
-    1px solid rgba(125, 211, 252, 0.20);
+  border: 1px solid rgba(125, 211, 252, 0.2);
 
   border-radius: 11px;
 
-  padding:
-    0 16px;
+  padding: 0 16px;
 
-  background:
-    #f8fafc;
+  background: #f8fafc;
 
-  color:
-    #0f172a;
+  color: #0f172a;
 
-  font-size:
-    0.92rem;
+  font-size: 0.92rem;
 
-  font-weight:
-    600;
+  font-weight: 600;
 }
 
 .pdv-search-row #pdv-search::placeholder {
-  color:
-    #64748b;
+  color: #64748b;
 
-  font-weight:
-    450;
+  font-weight: 450;
 }
 
 .pdv-search-row #pdv-search:focus {
-  border-color:
-    #38bdf8;
+  border-color: #38bdf8;
 
-  box-shadow:
-    0 0 0 4px rgba(56, 189, 248, 0.14);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.14);
 }
-
 
 /* =========================================================
    ATALHOS DO PDV
    ========================================================= */
 
 .pdv-layout .pdv-shortcuts-hint {
-  padding:
-    8px 4px 4px;
+  padding: 8px 4px 4px;
 
-  color:
-    #94a3b8;
+  color: #94a3b8;
 }
 
 .pdv-layout .pdv-shortcuts-hint kbd {
-  border-color:
-    rgba(148, 163, 184, 0.25);
+  border-color: rgba(148, 163, 184, 0.25);
 
-  background:
-    #17263a;
+  background: #17263a;
 
-  color:
-    #e2e8f0;
+  color: #e2e8f0;
 
-  box-shadow:
-    inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22);
 }
-
 
 /* =========================================================
    PRODUTOS DISPONÍVEIS
    ========================================================= */
 
 .pdv-layout .product-picker {
-  margin-top:
-    10px;
+  margin-top: 10px;
 }
 
 .pdv-layout .product-tile {
-  position:
-    relative;
+  position: relative;
 
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  min-height:
-    96px;
+  min-height: 96px;
 
-  padding:
-    14px;
+  padding: 14px;
 
-  border:
-    1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.16);
 
-  border-radius:
-    13px;
+  border-radius: 13px;
 
-  background:
-    linear-gradient(145deg,
-      rgba(30, 52, 76, 0.92),
-      rgba(17, 34, 54, 0.96));
+  background: linear-gradient(
+    145deg,
+    rgba(30, 52, 76, 0.92),
+    rgba(17, 34, 54, 0.96)
+  );
 
-  color:
-    #ffffff;
+  color: #ffffff;
 
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .pdv-layout .product-tile::before {
   content: "";
 
-  position:
-    absolute;
+  position: absolute;
 
-  width:
-    70px;
+  width: 70px;
 
-  height:
-    70px;
+  height: 70px;
 
-  right:
-    -24px;
+  right: -24px;
 
-  top:
-    -26px;
+  top: -26px;
 
-  border-radius:
-    50%;
+  border-radius: 50%;
 
-  background:
-    rgba(56, 189, 248, 0.10);
+  background: rgba(56, 189, 248, 0.1);
 }
 
 .pdv-layout .product-tile:hover {
-  transform:
-    translateY(-2px);
+  transform: translateY(-2px);
 
-  border-color:
-    rgba(56, 189, 248, 0.60);
+  border-color: rgba(56, 189, 248, 0.6);
 
-  box-shadow:
-    0 14px 32px rgba(0, 0, 0, 0.20);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.2);
 }
 
 .pdv-layout .product-tile strong {
-  position:
-    relative;
+  position: relative;
 
-  z-index:
-    1;
+  z-index: 1;
 
-  color:
-    #f8fafc;
+  color: #f8fafc;
 
-  font-size:
-    0.84rem;
+  font-size: 0.84rem;
 }
 
 .pdv-layout .product-tile span {
-  position:
-    relative;
+  position: relative;
 
-  z-index:
-    1;
+  z-index: 1;
 
-  color:
-    #94a3b8;
+  color: #94a3b8;
 }
-
 
 /* =========================================================
    PAINEL DO CARRINHO
    ========================================================= */
 
-.pdv-layout>aside.card {
-  min-width:
-    0;
+.pdv-layout > aside.card {
+  min-width: 0;
 
-  border:
-    1px solid rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.18);
 
-  border-radius:
-    17px;
+  border-radius: 17px;
 
-  background:
-    linear-gradient(180deg,
-      rgba(17, 38, 60, 0.98),
-      rgba(9, 24, 40, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(17, 38, 60, 0.98),
+    rgba(9, 24, 40, 0.98)
+  );
 
-  box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.20);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
 
-  color:
-    #f8fafc;
+  color: #f8fafc;
 }
-
 
 /* =========================================================
    CABEÇALHO DO CARRINHO
    ========================================================= */
 
-.pdv-layout>aside.card>.card-header {
-  min-height:
-    58px;
+.pdv-layout > aside.card > .card-header {
+  min-height: 58px;
 
-  padding:
-    14px 16px;
+  padding: 14px 16px;
 
-  border-bottom:
-    1px solid rgba(148, 163, 184, 0.14);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 
-  background:
-    rgba(4, 17, 30, 0.42);
+  background: rgba(4, 17, 30, 0.42);
 }
 
-.pdv-layout>aside.card>.card-header h2 {
-  color:
-    #ffffff;
+.pdv-layout > aside.card > .card-header h2 {
+  color: #ffffff;
 
-  font-size:
-    1rem;
+  font-size: 1rem;
 
-  letter-spacing:
-    0.01em;
+  letter-spacing: 0.01em;
 }
-
 
 /* =========================================================
    CORPO DO CARRINHO
    ========================================================= */
 
-.pdv-layout>aside.card>.card-body {
-  padding:
-    16px;
+.pdv-layout > aside.card > .card-body {
+  padding: 16px;
 }
 
 .pdv-layout #cart-lines {
-  min-height:
-    190px;
+  min-height: 190px;
 
-  max-height:
-    340px;
+  max-height: 340px;
 
-  overflow-y:
-    auto;
+  overflow-y: auto;
 
-  padding-right:
-    4px;
+  padding-right: 4px;
 
-  scrollbar-width:
-    thin;
+  scrollbar-width: thin;
 }
-
 
 /* =========================================================
    LINHAS DO CARRINHO
    ========================================================= */
 
 .pdv-layout .cart-line {
-  margin-bottom:
-    7px;
+  margin-bottom: 7px;
 
-  padding:
-    11px 10px;
+  padding: 11px 10px;
 
-  border:
-    1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.12);
 
-  border-radius:
-    11px;
+  border-radius: 11px;
 
-  background:
-    rgba(30, 52, 76, 0.52);
+  background: rgba(30, 52, 76, 0.52);
 
   transition:
     background 0.15s ease,
@@ -2590,269 +2327,193 @@ tr:last-child td {
 }
 
 .pdv-layout .cart-line:hover {
-  transform:
-    translateX(2px);
+  transform: translateX(2px);
 
-  border-color:
-    rgba(56, 189, 248, 0.32);
+  border-color: rgba(56, 189, 248, 0.32);
 
-  background:
-    rgba(35, 63, 91, 0.72);
+  background: rgba(35, 63, 91, 0.72);
 }
 
 .pdv-layout .cart-line small {
-  color:
-    #94a3b8;
+  color: #94a3b8;
 }
 
-.pdv-layout .cart-line>strong {
-  color:
-    #7dd3fc;
+.pdv-layout .cart-line > strong {
+  color: #7dd3fc;
 
-  font-weight:
-    800;
+  font-weight: 800;
 }
-
 
 /* =========================================================
    QUANTIDADE DO CARRINHO
    ========================================================= */
 
 .pdv-layout .cart-qty button {
-  border:
-    1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.22);
 
-  background:
-    #172b42;
+  background: #172b42;
 
-  color:
-    #ffffff;
+  color: #ffffff;
 
-  transition:
-    0.15s ease;
+  transition: 0.15s ease;
 }
 
 .pdv-layout .cart-qty button:hover {
-  background:
-    #0ea5e9;
+  background: #0ea5e9;
 
-  border-color:
-    #0ea5e9;
+  border-color: #0ea5e9;
 }
 
 .pdv-layout .cart-qty span {
-  min-width:
-    20px;
+  min-width: 20px;
 
-  text-align:
-    center;
+  text-align: center;
 
-  color:
-    #ffffff;
+  color: #ffffff;
 
-  font-weight:
-    800;
+  font-weight: 800;
 }
-
 
 /* =========================================================
    RESUMO FINANCEIRO
    ========================================================= */
 
 .pdv-layout .summary-list {
-  margin:
-    18px 0;
+  margin: 18px 0;
 
-  padding:
-    14px;
+  padding: 14px;
 
-  border:
-    1px solid rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.16);
 
-  border-radius:
-    14px;
+  border-radius: 14px;
 
-  background:
-    rgba(3, 15, 28, 0.55);
+  background: rgba(3, 15, 28, 0.55);
 }
 
 .pdv-layout .summary-row {
-  color:
-    #cbd5e1;
+  color: #cbd5e1;
 
-  font-size:
-    0.78rem;
+  font-size: 0.78rem;
 }
 
 .pdv-layout .summary-row strong {
-  color:
-    #ffffff;
+  color: #ffffff;
 }
 
 .pdv-layout .summary-row.total {
-  margin-top:
-    4px;
+  margin-top: 4px;
 
-  padding-top:
-    14px;
+  padding-top: 14px;
 
-  border-top:
-    1px solid rgba(148, 163, 184, 0.18);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
 
-  color:
-    #ffffff;
+  color: #ffffff;
 }
 
 .pdv-layout .summary-row.total strong {
-  color:
-    #67e8f9;
+  color: #67e8f9;
 
-  font-size:
-    1.35rem;
+  font-size: 1.35rem;
 
-  font-weight:
-    900;
+  font-weight: 900;
 }
-
 
 /* =========================================================
    FORMULÁRIO DA VENDA
    ========================================================= */
 
-.pdv-layout>aside label {
-  color:
-    #cbd5e1;
+.pdv-layout > aside label {
+  color: #cbd5e1;
 }
 
-.pdv-layout>aside select,
-.pdv-layout>aside input {
-  border-color:
-    rgba(148, 163, 184, 0.20);
+.pdv-layout > aside select,
+.pdv-layout > aside input {
+  border-color: rgba(148, 163, 184, 0.2);
 
-  background:
-    #f8fafc;
+  background: #f8fafc;
 }
-
 
 /* =========================================================
    BOTÃO FINALIZAR
    ========================================================= */
 
 .pdv-layout #finish-sale {
-  min-height:
-    50px;
+  min-height: 50px;
 
-  margin-top:
-    4px;
+  margin-top: 4px;
 
-  border:
-    1px solid rgba(45, 212, 191, 0.35);
+  border: 1px solid rgba(45, 212, 191, 0.35);
 
-  border-radius:
-    11px;
+  border-radius: 11px;
 
-  background:
-    linear-gradient(135deg,
-      #0f766e,
-      #14b8a6);
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
 
-  box-shadow:
-    0 10px 28px rgba(20, 184, 166, 0.20);
+  box-shadow: 0 10px 28px rgba(20, 184, 166, 0.2);
 
-  color:
-    #ffffff;
+  color: #ffffff;
 
-  font-size:
-    0.88rem;
+  font-size: 0.88rem;
 
-  font-weight:
-    850;
+  font-weight: 850;
 
-  letter-spacing:
-    0.015em;
+  letter-spacing: 0.015em;
 }
 
 .pdv-layout #finish-sale:hover {
-  transform:
-    translateY(-2px);
+  transform: translateY(-2px);
 
-  background:
-    linear-gradient(135deg,
-      #0d9488,
-      #22c5b5);
+  background: linear-gradient(135deg, #0d9488, #22c5b5);
 
-  box-shadow:
-    0 14px 34px rgba(20, 184, 166, 0.28);
+  box-shadow: 0 14px 34px rgba(20, 184, 166, 0.28);
 }
-
 
 /* =========================================================
    ESTADO VAZIO DO PDV
    ========================================================= */
 
 .pdv-layout .empty-state {
-  color:
-    #94a3b8;
+  color: #94a3b8;
 }
-
 
 /* =========================================================
    RESPONSIVIDADE DO NOVO PDV
    ========================================================= */
 
 @media (max-width: 1100px) {
-
   .pdv-layout {
-    grid-template-columns:
-      minmax(0, 1fr) minmax(310px, 0.78fr);
+    grid-template-columns: minmax(0, 1fr) minmax(310px, 0.78fr);
 
-    padding:
-      12px;
+    padding: 12px;
   }
-
 }
-
 
 @media (max-width: 900px) {
-
   .pdv-layout {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
 
-    min-height:
-      auto;
+    min-height: auto;
 
-    padding:
-      10px;
+    padding: 10px;
 
-    border-radius:
-      16px;
+    border-radius: 16px;
   }
-
 }
 
-
 @media (max-width: 650px) {
-
   .pdv-layout {
-    gap:
-      10px;
+    gap: 10px;
 
-    padding:
-      8px;
+    padding: 8px;
   }
 
-  .pdv-layout>section,
-  .pdv-layout>aside.card {
-    border-radius:
-      13px;
+  .pdv-layout > section,
+  .pdv-layout > aside.card {
+    border-radius: 13px;
   }
 
   .pdv-layout #cart-lines {
-    max-height:
-      none;
+    max-height: none;
   }
-
 }
 
 /* =========================================================
@@ -2860,18 +2521,17 @@ tr:last-child td {
    ========================================================= */
 
 @media (max-width: 900px) {
-
   .pdv-layout {
     grid-template-columns: 1fr;
   }
 
   /* Permite reorganizar os elementos internos do PDV */
-  .pdv-layout>section {
+  .pdv-layout > section {
     display: contents;
   }
 
   /* 1º - Carrinho */
-  .pdv-layout>aside.card {
+  .pdv-layout > aside.card {
     order: 1;
   }
 
@@ -2891,25 +2551,25 @@ tr:last-child td {
   }
 
   /* Mostra aproximadamente 2 itens no carrinho */
-    #cart-lines {
-      height: 236px !important;
-      max-height: 236px !important;
-  
-      overflow-y: auto !important;
-      overflow-x: hidden;
-  
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: auto;
-      touch-action: pan-y;
-  
-      padding-right: 4px;
-    }
-  
-    #cart-lines .cart-line {
-      min-height: 118px;
-      box-sizing: border-box;
-      touch-action: pan-y;
-    }
+  #cart-lines {
+    height: 236px !important;
+    max-height: 236px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+
+    padding-right: 4px;
+  }
+
+  #cart-lines .cart-line {
+    min-height: 118px;
+    box-sizing: border-box;
+    touch-action: pan-y;
+  }
 
   .product-picker,
   .product-tile {
