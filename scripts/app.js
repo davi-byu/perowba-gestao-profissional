@@ -1789,7 +1789,8 @@
             <div class="summary-list">
               <div class="summary-row"><span>Subtotal</span><strong>${money(cartTotal)}</strong></div>
               ${canViewSensitiveValues() ? `<div class="summary-row"><span>Lucro estimado</span><strong>${money(cartTotal - cartCost)}</strong></div>` : ""}
-              <div class="summary-row total"><span>Total</span><strong>${money(cartTotal)}</strong></div>
+              <div class="summary-row"><span>Desconto</span><strong id="sale-discount-summary">-${money(0)}</strong></div>
+              <div class="summary-row total"><span>Total</span><strong id="sale-total-summary">${money(cartTotal)}</strong></div>
             </div>
 
             <div class="form-grid one-column">
@@ -1816,6 +1817,53 @@
 
     const pdvSearch =
       $("#pdv-search");
+    const saleDiscountInput =
+      $("#sale-discount");
+
+    const saleDiscountSummary =
+      $("#sale-discount-summary");
+
+    const saleTotalSummary =
+      $("#sale-total-summary");
+
+    const updateSaleSummary =
+      () => {
+
+        const discount =
+          Math.max(
+            0,
+            Number(
+              saleDiscountInput?.value || 0
+            )
+          );
+
+        if (saleDiscountSummary) {
+
+          saleDiscountSummary.textContent =
+            discount > 0
+              ? `-${money(discount)}`
+              : money(0);
+        }
+
+        if (saleTotalSummary) {
+
+          saleTotalSummary.textContent =
+            money(
+              Math.max(
+                0,
+                cartTotal - discount
+              )
+            );
+        }
+      };
+
+    saleDiscountInput
+      ?.addEventListener(
+        "input",
+        updateSaleSummary
+      );
+
+    updateSaleSummary();
 
 
     // =======================================================
