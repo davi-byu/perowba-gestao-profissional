@@ -4858,9 +4858,34 @@ if (
 
     } catch (error) {
 
+      console.error(
+        "Erro ao finalizar venda:",
+        error
+      );
+
+      const rawMessage =
+        String(
+          error?.message || ""
+        ).trim();
+
+      const errorCode =
+        String(
+          error?.code || ""
+        ).toLowerCase();
+
+      const genericFirebaseError =
+        !rawMessage ||
+        rawMessage.toLowerCase() === "internal" ||
+        rawMessage.toLowerCase() === "unavailable" ||
+        errorCode.includes("internal") ||
+        errorCode.includes("unavailable") ||
+        errorCode.includes("network") ||
+        errorCode.includes("deadline-exceeded");
+
       const errorMessage =
-        error?.message ||
-        "Não foi possível finalizar a venda.";
+        genericFirebaseError
+          ? "Não foi possível concluir a venda no momento. Verifique sua conexão e tente novamente."
+          : rawMessage;
 
       showSaleError(
         errorMessage
