@@ -283,6 +283,11 @@ export const finalizarVenda = onCall(
       "Desconto"
     );
 
+    const additionalFee = nonNegativeNumber(
+      data.additionalFee ?? 0,
+      "Taxa adicional"
+    );
+
     const companyId = profile.companyId;
 
     const companyRef = db.doc(
@@ -534,7 +539,9 @@ export const finalizarVenda = onCall(
 
 
         const total =
-          subtotal - discount;
+          subtotal -
+          discount +
+          additionalFee;
 
         const sequence =
           Number(
@@ -830,6 +837,7 @@ export const finalizarVenda = onCall(
           items,
           subtotal,
           discount,
+          additionalFee,
           total,
           cost,
           profit: total - cost,

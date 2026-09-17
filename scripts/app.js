@@ -1788,8 +1788,9 @@
 
             <div class="summary-list">
               <div class="summary-row"><span>Subtotal</span><strong>${money(cartTotal)}</strong></div>
-              ${canViewSensitiveValues() ? `<div class="summary-row"><span>Lucro estimado</span><strong>${money(cartTotal - cartCost)}</strong></div>` : ""}
+              ${canViewSensitiveValues() ? `<div class="summary-row"><span>Lucro estimado</span><strong id="sale-profit-summary">${money(cartTotal - cartCost)}</strong></div>` : ""}
               <div class="summary-row"><span>Desconto</span><strong id="sale-discount-summary">-${money(0)}</strong></div>
+              <div class="summary-row"><span>Taxa adicional</span><strong id="sale-fee-summary">${money(0)}</strong></div>
               <div class="summary-row total"><span>Total</span><strong id="sale-total-summary">${money(cartTotal)}</strong></div>
             </div>
 
@@ -1808,6 +1809,9 @@
               <label>Desconto (R$)
                 <input id="sale-discount" type="number" min="0" step="0.01" value="0">
               </label>
+              <label>Taxa adicional (R$)
+                <input id="sale-additional-fee" type="number" min="0" step="0.01" value="0">
+              </label>
               <button id="finish-sale" class="btn primary full" type="button">Finalizar venda</button>
             </div>
           </div>
@@ -1823,6 +1827,15 @@
     const saleDiscountSummary =
       $("#sale-discount-summary");
 
+    const saleAdditionalFeeInput =
+      $("#sale-additional-fee");
+
+    const saleFeeSummary =
+      $("#sale-fee-summary");
+
+    const saleProfitSummary =
+      $("#sale-profit-summary");
+
     const saleTotalSummary =
       $("#sale-total-summary");
 
@@ -1837,6 +1850,14 @@
             )
           );
 
+        const additionalFee =
+          Math.max(
+            0,
+            Number(
+              saleAdditionalFeeInput?.value || 0
+            )
+          );
+
         if (saleDiscountSummary) {
 
           saleDiscountSummary.textContent =
@@ -1845,19 +1866,44 @@
               : money(0);
         }
 
+        if (saleFeeSummary) {
+
+          saleFeeSummary.textContent =
+            money(additionalFee);
+        }
+
+        if (saleProfitSummary) {
+
+          saleProfitSummary.textContent =
+            money(
+              cartTotal -
+              discount +
+              additionalFee -
+              cartCost
+            );
+        }
+
         if (saleTotalSummary) {
 
           saleTotalSummary.textContent =
             money(
               Math.max(
                 0,
-                cartTotal - discount
+                cartTotal -
+                discount +
+                additionalFee
               )
             );
         }
       };
 
     saleDiscountInput
+      ?.addEventListener(
+        "input",
+        updateSaleSummary
+      );
+
+    saleAdditionalFeeInput
       ?.addEventListener(
         "input",
         updateSaleSummary
@@ -4141,6 +4187,13 @@ if (
         )
       );
 
+    const additionalFee =
+      Math.max(
+        0,
+        Number(
+          $("#sale-additional-fee").value || 0
+        )
+      );
     const subtotal =
       state.cart.reduce(
         (sum, item) =>
@@ -4245,7 +4298,9 @@ if (
       );
 
     const total =
-      subtotal - discount;
+      subtotal -
+      discount +
+      additionalFee;
 
     const cost =
       state.cart.reduce(
@@ -4267,6 +4322,7 @@ if (
         ),
       subtotal,
       discount,
+      additionalFee,
       total,
       cost,
       profit:
@@ -4645,6 +4701,11 @@ if (
     }
 
     const discount = Math.max(0, Number($("#sale-discount").value || 0));
+
+    const additionalFee = Math.max(
+      0,
+      Number($("#sale-additional-fee").value || 0)
+    );
     const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
     if (discount > subtotal) {
@@ -4671,7 +4732,8 @@ if (
         })),
         customerId: $("#sale-customer").value || null,
         payment: $("#sale-payment").value,
-        discount
+        discount,
+        additionalFee
       });
 
       state.cart = [];
