@@ -4496,6 +4496,101 @@ if (
       ?.remove();
   }
 
+  function showSaleSuccess(
+    saleNumber = ""
+  ) {
+
+    document
+      .getElementById(
+        "sale-success-overlay"
+      )
+      ?.remove();
+
+    const overlay =
+      document.createElement(
+        "div"
+      );
+
+    overlay.id =
+      "sale-success-overlay";
+
+    overlay.innerHTML = `
+      <div style="
+        width:min(330px, calc(100vw - 40px));
+        background:#ffffff;
+        border-radius:20px;
+        padding:30px 24px;
+        box-shadow:0 20px 60px rgba(15,23,42,.28);
+        text-align:center;
+      ">
+
+        <div style="
+          width:68px;
+          height:68px;
+          margin:0 auto 18px;
+          border-radius:50%;
+          background:#22c55e;
+          color:#ffffff;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:40px;
+          font-weight:700;
+          line-height:1;
+        ">
+          ✓
+        </div>
+
+        <strong style="
+          display:block;
+          color:#166534;
+          font-size:1.2rem;
+          margin-bottom:8px;
+        ">
+          Venda finalizada!
+        </strong>
+
+        <span style="
+          display:block;
+          color:#475569;
+          font-size:.95rem;
+        ">
+          ${
+            saleNumber
+              ? `Venda ${saleNumber} concluída com sucesso.`
+              : "Venda concluída com sucesso."
+          }
+        </span>
+
+      </div>
+    `;
+
+    Object.assign(
+      overlay.style,
+      {
+        position: "fixed",
+        inset: "0",
+        zIndex: "210000",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+        background: "rgba(15,23,42,.35)"
+      }
+    );
+
+    document.body.appendChild(
+      overlay
+    );
+
+    setTimeout(
+      () => {
+        overlay.remove();
+      },
+      2200
+    );
+  }
+
   async function finishSaleCloud() {
     if (!state.cart.length) {
       return toast("Adicione pelo menos um produto.");
@@ -4539,6 +4634,10 @@ if (
       );
 
       await refreshCloudState();
+
+      showSaleSuccess(
+        result.number
+      );
 
       toast(`Venda ${result.number} finalizada com segurança.`);
 
