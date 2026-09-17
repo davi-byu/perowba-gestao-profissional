@@ -209,25 +209,20 @@
     renderers[currentRoute]?.();
   }
 
-  let improvementsNoticeShown = false;
-
   function showImprovementsNotice() {
-
-    if (improvementsNoticeShown) {
-      return;
-    }
 
     const now =
       new Date();
 
     const start =
       new Date(
-        "2026-09-12T00:00:00-03:00"
+        "2026-09-17T00:44:00-03:00"
       );
 
     const end =
       new Date(
-        "2026-09-19T00:00:00-03:00"
+        start.getTime() +
+        24 * 60 * 60 * 1000
       );
 
     if (
@@ -237,9 +232,6 @@
       return;
     }
 
-    improvementsNoticeShown =
-      true;
-
     if (
       document.querySelector(
         "#system-updates-modal"
@@ -247,6 +239,78 @@
     ) {
       return;
     }
+
+    const userId =
+      String(
+        currentUser?.id ||
+        currentUser?.uid ||
+        "usuario"
+      );
+
+    const storageKey =
+      `perowba-melhorias-20260917-${userId}`;
+
+    let noticeState = {
+      count: 0,
+      lastShownAt: 0
+    };
+
+    try {
+
+      const saved =
+        JSON.parse(
+          localStorage.getItem(
+            storageKey
+          ) || "{}"
+        );
+
+      noticeState = {
+        count:
+          Number(saved.count || 0),
+
+        lastShownAt:
+          Number(
+            saved.lastShownAt || 0
+          )
+      };
+
+    } catch (error) {
+
+      noticeState = {
+        count: 0,
+        lastShownAt: 0
+      };
+    }
+
+    if (
+      noticeState.count >= 4
+    ) {
+      return;
+    }
+
+    const sixHours =
+      6 * 60 * 60 * 1000;
+
+    if (
+      noticeState.lastShownAt &&
+      now.getTime() -
+        noticeState.lastShownAt <
+        sixHours
+    ) {
+      return;
+    }
+
+    noticeState.count += 1;
+
+    noticeState.lastShownAt =
+      now.getTime();
+
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(
+        noticeState
+      )
+    );
 
     const modal =
       document.createElement(
@@ -281,14 +345,14 @@
           font-size:2rem;
           margin-bottom:8px;
         ">
-          🚀
+          &#128640;
         </div>
 
         <h2 style="
           margin:0 0 8px;
           color:#0f172a;
         ">
-          Novidades no Perowba Gest&atilde;o
+          Novidades no Perowba Gestão
         </h2>
 
         <p style="
@@ -296,8 +360,8 @@
           color:#475569;
           line-height:1.55;
         ">
-          Fizemos novas melhorias para deixar o sistema
-          mais seguro, organizado e profissional.
+          O PDV recebeu novas melhorias para deixar
+          suas vendas mais rápidas, claras e seguras.
         </p>
 
         <div style="
@@ -308,30 +372,39 @@
         ">
 
           <div>
-            ✅ Painel do vendedor focado nas vendas do dia atual.
+            &#9989; Nova confirmação visual ao finalizar uma venda.
           </div>
 
           <div>
-            ✅ Relat&oacute;rios do vendedor limitados &agrave;s vendas do dia.
+            &#9989; Desconto agora aparece e atualiza o total no carrinho.
           </div>
 
           <div>
-            ✅ Custos e lucros protegidos para o perfil vendedor.
+            &#9989; Nova opção de taxa adicional na venda.
           </div>
 
           <div>
-            ✅ Cadastro de Novo Produto removido do vendedor.
+            &#9989; Total e lucro estimado atualizados automaticamente.
           </div>
 
           <div>
-            ✅ Produtos e vendas com carregamento mais seguro.
+            &#9989; Nova tela vermelha quando uma venda não é concluída.
           </div>
 
           <div>
-            ✅ Melhorias nas permiss&otilde;es e seguran&ccedil;a do sistema.
+            &#9989; Mensagens de erro mais claras e amigáveis.
           </div>
 
         </div>
+
+        <p style="
+          margin:18px 0 0;
+          color:#64748b;
+          font-size:.85rem;
+          line-height:1.4;
+        ">
+          Este aviso ficará disponível por apenas 24 horas.
+        </p>
 
         <button
           id="close-system-updates"
@@ -357,27 +430,13 @@
     Object.assign(
       modal.style,
       {
-        position:
-          "fixed",
-
-        inset:
-          "0",
-
-        zIndex:
-          "99999",
-
-        display:
-          "flex",
-
-        alignItems:
-          "center",
-
-        justifyContent:
-          "center",
-
-        padding:
-          "20px",
-
+        position: "fixed",
+        inset: "0",
+        zIndex: "99999",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
         background:
           "rgba(15,23,42,.65)"
       }
@@ -393,11 +452,9 @@
       )
       ?.addEventListener(
         "click",
-        () =>
-          modal.remove()
+        () => modal.remove()
       );
   }
-
 
   function showApp() {
   $("#loading-screen")?.classList.add("hidden");
