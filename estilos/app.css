@@ -1,0 +1,2578 @@
+:root {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+
+  --text: #0f172a;
+  --muted: #64748b;
+
+  --border: #dbe3ee;
+
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --primary-light: #14b8a6;
+
+  --danger: #b91c1c;
+  --warning: #b45309;
+  --success: #15803d;
+
+  --sidebar: #0f172a;
+  --sidebar-soft: #1e293b;
+
+  --shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+
+  --shadow-hover: 0 10px 30px rgba(15, 23, 42, 0.1);
+
+  --radius: 14px;
+
+  --sidebar-width: 205px;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: var(--text);
+  background: var(--bg);
+
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* =========================================================
+   TELA DE CARREGAMENTO
+   ========================================================= */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+
+  z-index: 9999;
+
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(20, 184, 166, 0.12),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(14, 116, 144, 0.1),
+      transparent 34%
+    ),
+    #f1f5f9;
+}
+
+.loading-screen.hidden {
+  display: none !important;
+}
+
+.loading-card {
+  width: min(400px, 100%);
+
+  padding: 32px;
+
+  background: #ffffff;
+
+  border: 1px solid rgba(219, 227, 238, 0.9);
+  border-radius: 18px;
+
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.12);
+
+  text-align: center;
+}
+
+.loading-card .brand {
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.loading-card p {
+  margin: 18px 0 0;
+
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.loading-spinner {
+  width: 38px;
+  height: 38px;
+
+  margin: 0 auto;
+
+  border: 4px solid #e2e8f0;
+  border-top-color: var(--primary);
+
+  border-radius: 50%;
+
+  animation: perowba-spin 0.8s linear infinite;
+}
+
+@keyframes perowba-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   LOGIN E CADASTRO
+   ========================================================= */
+
+.login-screen {
+  min-height: 100vh;
+
+  display: grid;
+  place-items: center;
+
+  padding: 24px;
+
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(20, 184, 166, 0.24),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(14, 116, 144, 0.22),
+      transparent 32%
+    ),
+    #0f172a;
+}
+
+.login-card {
+  width: min(450px, 100%);
+
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+
+  background: var(--surface);
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  border-radius: 22px;
+
+  padding: 30px;
+
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.login-card h1 {
+  margin: 26px 0 8px;
+
+  font-size: 1.55rem;
+  line-height: 1.2;
+}
+
+.login-card .muted {
+  margin-top: 0;
+}
+
+#register-area h1 {
+  margin-top: 24px;
+}
+
+/* =========================================================
+   MARCA
+   ========================================================= */
+
+.brand {
+  min-height: 68px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: #ffffff;
+}
+
+.brand-login {
+  color: var(--text);
+  min-height: auto;
+}
+
+.brand strong,
+.brand small {
+  display: block;
+}
+
+.brand strong {
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+
+.brand small {
+  color: #94a3b8;
+
+  margin-top: 3px;
+
+  font-size: 0.73rem;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  border-radius: 10px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 0.82rem;
+  font-weight: 800;
+
+  background: linear-gradient(135deg, #14b8a6, #0e7490);
+
+  color: #ffffff;
+
+  box-shadow: 0 5px 14px rgba(20, 184, 166, 0.22);
+}
+
+/* =========================================================
+   APP PRINCIPAL
+   ========================================================= */
+
+.app-shell {
+  width: 100%;
+
+  min-height: 100vh;
+
+  display: grid;
+
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+
+  background: var(--bg);
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+  position: sticky;
+  top: 0;
+
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 0 12px 14px;
+
+  background: var(--sidebar);
+
+  color: #ffffff;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  z-index: 20;
+
+  scrollbar-width: thin;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+.sidebar .brand {
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  display: grid;
+
+  gap: 3px;
+
+  margin-top: 4px;
+}
+
+.nav-item {
+  width: 100%;
+
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 8px 10px;
+
+  color: #cbd5e1;
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 8px;
+
+  font-size: 0.79rem;
+  font-weight: 500;
+
+  text-align: left;
+
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.nav-item span {
+  width: 18px;
+
+  flex: 0 0 18px;
+
+  display: inline-grid;
+  place-items: center;
+
+  font-size: 0.82rem;
+
+  text-align: center;
+}
+
+.nav-item:hover {
+  color: #ffffff;
+  background: #172033;
+}
+
+.nav-item.active {
+  color: #ffffff;
+
+  background: var(--sidebar-soft);
+
+  font-weight: 650;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+
+  padding-top: 14px;
+
+  display: grid;
+
+  gap: 8px;
+
+  color: #cbd5e1;
+
+  font-size: 0.72rem;
+}
+
+/* =========================================================
+   ÁREA PRINCIPAL
+   ========================================================= */
+
+.main-area {
+  min-width: 0;
+
+  width: 100%;
+
+  background: var(--bg);
+}
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar {
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 14px 24px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  border-bottom: 1px solid var(--border);
+
+  position: sticky;
+  top: 0;
+
+  z-index: 10;
+
+  backdrop-filter: blur(10px);
+}
+
+.topbar h1 {
+  margin: 0;
+
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.topbar p {
+  margin: 3px 0 0;
+
+  color: var(--muted);
+
+  font-size: 0.76rem;
+}
+
+.topbar-actions {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: var(--muted);
+
+  font-size: 0.76rem;
+}
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+
+  border: 1px solid var(--border);
+
+  background: var(--surface);
+
+  border-radius: 9px;
+
+  display: none;
+
+  color: var(--text);
+}
+
+/* =========================================================
+   CONTEÚDO
+   ========================================================= */
+
+.content {
+  width: 100%;
+
+  padding: 20px 24px 28px;
+
+  margin: 0 auto;
+}
+
+/* =========================================================
+   GRIDS
+   ========================================================= */
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.grid.cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card {
+  min-width: 0;
+
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius);
+
+  box-shadow: var(--shadow);
+
+  overflow: hidden;
+
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.card-body {
+  padding: 17px;
+}
+
+.card-header {
+  min-height: 50px;
+
+  padding: 13px 16px;
+
+  border-bottom: 1px solid var(--border);
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  justify-content: space-between;
+}
+
+.card-header h2,
+.card-header h3 {
+  margin: 0;
+
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+/* =========================================================
+   MÉTRICAS
+   ========================================================= */
+
+.metric {
+  min-height: 104px;
+
+  padding: 16px 17px;
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+.metric::after {
+  content: "";
+
+  position: absolute;
+
+  width: 72px;
+  height: 72px;
+
+  border-radius: 50%;
+
+  right: -18px;
+  top: -22px;
+
+  background: rgba(15, 118, 110, 0.07);
+}
+
+.metric-label {
+  position: relative;
+  z-index: 1;
+
+  color: var(--muted);
+
+  font-size: 0.73rem;
+}
+
+.metric-value {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  margin-top: 7px;
+
+  font-size: 1.45rem;
+  line-height: 1.1;
+
+  font-weight: 800;
+}
+
+.metric-note {
+  position: relative;
+  z-index: 1;
+
+  margin-top: 6px;
+
+  color: var(--muted);
+
+  font-size: 0.68rem;
+}
+
+/* =========================================================
+   AÇÕES
+   ========================================================= */
+
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 9px;
+
+  margin-bottom: 14px;
+}
+
+/* =========================================================
+   FORMULÁRIOS
+   ========================================================= */
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 13px;
+}
+
+.form-grid.one-column {
+  grid-template-columns: 1fr;
+}
+
+.form-grid.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+  display: grid;
+
+  gap: 6px;
+
+  color: #334155;
+
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+
+  min-height: 40px;
+
+  border: 1px solid var(--border);
+
+  border-radius: 9px;
+
+  padding: 8px 10px;
+
+  color: var(--text);
+
+  background: var(--surface);
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary-light);
+
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+
+  display: flex;
+
+  gap: 9px;
+
+  justify-content: flex-end;
+}
+
+.form-error {
+  color: var(--danger);
+
+  min-height: 18px;
+
+  font-size: 0.78rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.78rem;
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+/* =========================================================
+   BOTÕES
+   ========================================================= */
+
+.btn {
+  min-height: 38px;
+
+  border-radius: 9px;
+
+  border: 1px solid transparent;
+
+  padding: 8px 12px;
+
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.6;
+
+  transform: none;
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn.primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn.secondary {
+  background: #e8eef5;
+  color: #1e293b;
+}
+
+.btn.secondary:hover {
+  background: #dbe4ee;
+}
+
+.btn.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn.warning {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.btn.ghost {
+  background: transparent;
+
+  border-color: #334155;
+
+  color: #e2e8f0;
+}
+
+.btn.ghost:hover {
+  background: #1e293b;
+}
+
+.btn.full {
+  width: 100%;
+}
+
+.btn.small-btn {
+  min-height: 30px;
+
+  padding: 5px 9px;
+
+  font-size: 0.7rem;
+}
+
+/* =========================================================
+   TABELAS
+   ========================================================= */
+
+.table-wrap {
+  width: 100%;
+
+  overflow-x: auto;
+
+  scrollbar-width: thin;
+}
+
+table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  white-space: nowrap;
+}
+
+th,
+td {
+  padding: 11px 12px;
+
+  border-bottom: 1px solid var(--border);
+
+  text-align: left;
+
+  font-size: 0.76rem;
+}
+
+th {
+  color: #475569;
+
+  background: var(--surface-soft);
+
+  font-size: 0.68rem;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.04em;
+}
+
+tbody tr {
+  transition: background 0.12s ease;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 23px;
+
+  padding: 3px 8px;
+
+  border-radius: 999px;
+
+  font-size: 0.67rem;
+  font-weight: 750;
+
+  background: #e2e8f0;
+
+  color: #334155;
+}
+
+.badge.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.warning {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.badge.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge.info {
+  background: #cffafe;
+  color: #155e75;
+}
+
+/* =========================================================
+   ESTADO VAZIO
+   ========================================================= */
+
+.empty-state {
+  padding: 34px 18px;
+
+  text-align: center;
+
+  color: var(--muted);
+
+  font-size: 0.78rem;
+}
+
+/* =========================================================
+   GRÁFICOS DE BARRAS
+   ========================================================= */
+
+.bar-list {
+  display: grid;
+
+  gap: 11px;
+}
+
+.bar-row {
+  display: grid;
+
+  gap: 5px;
+}
+
+.bar-row header {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  font-size: 0.72rem;
+}
+
+.bar-track {
+  height: 7px;
+
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  background: #e2e8f0;
+}
+
+.bar-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
+}
+
+/* =========================================================
+   PDV
+   ========================================================= */
+
+.pdv-layout {
+  display: grid;
+
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+
+  gap: 14px;
+}
+
+.product-picker {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+.product-tile {
+  border: 1px solid var(--border);
+
+  background: var(--surface);
+
+  border-radius: 11px;
+
+  padding: 12px;
+
+  text-align: left;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.product-tile:hover {
+  border-color: var(--primary-light);
+
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+}
+
+.product-tile strong,
+.product-tile span {
+  display: block;
+}
+
+.product-tile span {
+  color: var(--muted);
+
+  font-size: 0.72rem;
+
+  margin-top: 4px;
+}
+
+/* =========================================================
+   CARRINHO
+   ========================================================= */
+
+.cart-line {
+  display: grid;
+
+  grid-template-columns: 1fr auto auto;
+
+  gap: 8px;
+
+  align-items: center;
+
+  padding: 10px 0;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.cart-line:last-child {
+  border-bottom: 0;
+}
+
+.cart-line small {
+  color: var(--muted);
+
+  display: block;
+
+  margin-top: 3px;
+}
+
+.cart-qty {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+.cart-qty button {
+  width: 28px;
+  height: 28px;
+
+  border-radius: 7px;
+
+  border: 1px solid var(--border);
+
+  background: #ffffff;
+}
+
+/* =========================================================
+   RESUMOS
+   ========================================================= */
+
+.summary-list {
+  display: grid;
+
+  gap: 9px;
+
+  margin: 16px 0;
+}
+
+.summary-row {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+.summary-row.total {
+  font-size: 1.05rem;
+
+  font-weight: 800;
+
+  padding-top: 11px;
+
+  border-top: 1px solid var(--border);
+}
+
+/* =========================================================
+   AVISOS
+   ========================================================= */
+
+.notice {
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #ecfeff;
+
+  color: #155e75;
+
+  border: 1px solid #a5f3fc;
+
+  font-size: 0.78rem;
+}
+
+.warning-box {
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #fff7ed;
+
+  color: #9a3412;
+
+  border: 1px solid #fed7aa;
+
+  font-size: 0.78rem;
+}
+
+/* =========================================================
+   ABAS
+   ========================================================= */
+
+.tabs {
+  display: flex;
+
+  gap: 7px;
+
+  flex-wrap: wrap;
+
+  margin-bottom: 14px;
+}
+
+.tab-btn {
+  border: 1px solid var(--border);
+
+  background: var(--surface);
+
+  border-radius: 999px;
+
+  padding: 7px 11px;
+
+  font-size: 0.75rem;
+}
+
+.tab-btn.active {
+  background: var(--text);
+
+  color: #ffffff;
+}
+
+/* =========================================================
+   KPI INLINE
+   ========================================================= */
+
+.kpi-inline {
+  display: flex;
+
+  gap: 16px;
+
+  flex-wrap: wrap;
+}
+
+.kpi-inline div {
+  min-width: 130px;
+}
+
+.kpi-inline strong {
+  display: block;
+
+  font-size: 1.1rem;
+}
+
+.kpi-inline span {
+  color: var(--muted);
+
+  font-size: 0.72rem;
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+.toast {
+  position: fixed;
+
+  right: 20px;
+  bottom: 20px;
+
+  max-width: min(390px, calc(100vw - 40px));
+
+  padding: 12px 15px;
+
+  border-radius: 11px;
+
+  background: #0f172a;
+
+  color: #ffffff;
+
+  box-shadow: var(--shadow-hover);
+
+  transform: translateY(24px);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition: 0.25s ease;
+
+  z-index: 10000;
+
+  font-size: 0.78rem;
+}
+
+.toast.show {
+  transform: translateY(0);
+
+  opacity: 1;
+}
+
+/* =========================================================
+   DESKTOP GRANDE
+   ========================================================= */
+
+@media (min-width: 1500px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+
+  .content {
+    padding: 22px 28px 32px;
+  }
+
+  .metric {
+    min-height: 110px;
+  }
+}
+
+/* =========================================================
+   NOTEBOOK / TABLET GRANDE
+   ========================================================= */
+
+@media (max-width: 1150px) {
+  .grid.cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid.three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================================
+   TABLET / MENU MÓVEL
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+
+    left: -270px;
+    top: 0;
+
+    width: 230px;
+
+    transition: left 0.25s ease;
+
+    box-shadow: 16px 0 40px rgba(0, 0, 0, 0.22);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .icon-btn {
+    display: grid;
+    place-items: center;
+  }
+
+  .pdv-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================================
+   CELULAR
+   ========================================================= */
+
+@media (max-width: 650px) {
+  .content {
+    padding: 14px;
+  }
+
+  .topbar {
+    min-height: 68px;
+
+    padding: 12px 14px;
+
+    gap: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 1.05rem;
+  }
+
+  .topbar-actions span {
+    display: none;
+  }
+
+  .grid.cards,
+  .grid.two,
+  .grid.three {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid,
+  .form-grid.two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .product-picker {
+    grid-template-columns: 1fr;
+  }
+
+  .login-screen {
+    padding: 14px;
+  }
+
+  .login-card {
+    padding: 22px;
+
+    border-radius: 18px;
+
+    max-height: calc(100vh - 28px);
+  }
+
+  .cart-line {
+    grid-template-columns: 1fr auto;
+  }
+
+  .cart-line > strong {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+/* =========================================================
+   TELAS MUITO PEQUENAS
+   ========================================================= */
+
+@media (max-width: 420px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  .card-body {
+    padding: 14px;
+  }
+
+  .card-header {
+    padding: 12px 14px;
+  }
+
+  .metric {
+    padding: 15px;
+  }
+
+  .metric-value {
+    font-size: 1.35rem;
+  }
+
+  .login-card {
+    padding: 20px;
+  }
+}
+/* ===== PDV CAMERA SCANNER ===== */
+
+.pdv-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.pdv-search-row #pdv-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.camera-scan-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.camera-scanner-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.78);
+}
+
+.camera-scanner-modal.hidden {
+  display: none;
+}
+
+.camera-scanner-card {
+  width: min(520px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.camera-scanner-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.camera-scanner-header h3 {
+  margin: 0 0 4px;
+}
+
+.camera-scanner-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.camera-close-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+
+.camera-reader {
+  width: 100%;
+  min-height: 290px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #0f172a;
+}
+
+.camera-placeholder {
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.camera-placeholder span {
+  font-size: 3rem;
+}
+
+.camera-placeholder small {
+  max-width: 320px;
+  opacity: 0.7;
+}
+
+.camera-cancel-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+
+@media (max-width: 700px) {
+  .pdv-search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .camera-scan-btn {
+    width: 100%;
+  }
+
+  .camera-scanner-modal {
+    padding: 10px;
+  }
+
+  .camera-scanner-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .camera-reader,
+  .camera-placeholder {
+    min-height: 260px;
+  }
+}
+
+/* ===== PDV SCAN FEEDBACK ===== */
+
+.pdv-scan-feedback {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 12000;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-width: 280px;
+  max-width: calc(100vw - 30px);
+
+  padding: 13px 18px;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+
+  transform: translate(-50%, -25px) scale(0.96);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.pdv-scan-feedback.show {
+  transform: translate(-50%, 0) scale(1);
+
+  opacity: 1;
+}
+
+.pdv-scan-feedback-icon {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: #dcfce7;
+  color: #15803d;
+
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.pdv-scan-feedback-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  min-width: 0;
+}
+
+.pdv-scan-feedback-text strong {
+  overflow: hidden;
+
+  color: #0f172a;
+
+  font-size: 0.96rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdv-scan-feedback-text span {
+  color: #64748b;
+
+  font-size: 0.82rem;
+}
+
+@media (max-width: 700px) {
+  .pdv-scan-feedback {
+    top: 12px;
+
+    width: calc(100vw - 24px);
+
+    min-width: 0;
+  }
+}
+
+/* ===== PDV KEYBOARD SHORTCUTS ===== */
+
+.pdv-shortcuts-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+
+  margin: 8px 0 14px;
+
+  font-size: 0.8rem;
+
+  color: #64748b;
+}
+
+.pdv-shortcuts-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pdv-shortcuts-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 31px;
+
+  padding: 3px 6px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 6px;
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 700px) {
+  .pdv-shortcuts-hint {
+    display: none;
+  }
+}
+
+/* ===== OCULTAR ATALHOS PDV NO CELULAR ===== */
+
+/* Celulares e telas menores */
+@media (max-width: 900px) {
+  .pdv-shortcuts-hint {
+    display: none !important;
+  }
+}
+
+/* Dispositivos predominantemente por toque */
+@media (hover: none) and (pointer: coarse) {
+  .pdv-shortcuts-hint {
+    display: none !important;
+  }
+}
+
+/* ===== CAMERA SOMENTE MOBILE ===== */
+
+/* No computador, a câmera não aparece */
+.camera-scan-btn {
+  display: none !important;
+}
+
+/* Em celular / tablet por toque, a câmera aparece */
+@media (max-width: 900px) {
+  .camera-scan-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Reforço para dispositivos com tela de toque */
+@media (hover: none) and (pointer: coarse) {
+  .camera-scan-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ===== PRODUCT BARCODE GENERATOR ===== */
+
+.product-barcode-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.product-barcode-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.barcode-mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.barcode-mode-options label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+
+  margin: 0;
+
+  font-size: 0.82rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.barcode-mode-options input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
+.barcode-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.barcode-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.barcode-input-row button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.product-barcode-field input[readonly] {
+  background: #f8fafc;
+  cursor: default;
+}
+
+.barcode-help {
+  color: #64748b;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 700px) {
+  .barcode-input-row {
+    flex-direction: column;
+  }
+
+  .barcode-input-row button {
+    width: 100%;
+  }
+
+  .barcode-mode-options {
+    flex-direction: column;
+    gap: 7px;
+  }
+}
+
+/* ===== FIX PRODUTOS FORM ALIGN ===== */
+
+#product-form.form-grid.two-columns {
+  align-items: start;
+}
+
+#product-form.form-grid.two-columns > label,
+#product-form.form-grid.two-columns > div {
+  align-self: start;
+}
+
+/* ===== BARCODE PRINT SETTINGS MODAL ===== */
+
+.barcode-print-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.62);
+
+  backdrop-filter: blur(3px);
+}
+
+.barcode-print-dialog {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+
+  overflow-y: auto;
+
+  border-radius: 16px;
+
+  background: #fff;
+
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.barcode-print-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 20px 22px 16px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.barcode-print-header h3 {
+  margin: 0;
+
+  font-size: 1.15rem;
+}
+
+.barcode-print-header p {
+  margin: 5px 0 0;
+
+  color: #64748b;
+
+  font-size: 0.85rem;
+}
+
+.barcode-print-close {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #f1f5f9;
+
+  color: #334155;
+
+  font-size: 1.55rem;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.barcode-print-close:hover {
+  background: #e2e8f0;
+}
+
+#barcode-print-form {
+  padding: 20px 22px 22px;
+}
+
+.barcode-print-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 16px;
+}
+
+.barcode-print-grid > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  margin: 0;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.barcode-print-grid input,
+.barcode-print-grid select {
+  width: 100%;
+}
+
+.barcode-print-checkbox {
+  grid-column: 1 / -1;
+
+  flex-direction: row !important;
+  align-items: center;
+
+  padding: 12px 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  cursor: pointer;
+}
+
+.barcode-print-checkbox input {
+  width: auto;
+
+  margin: 0;
+}
+
+.barcode-print-preview-info {
+  margin-top: 16px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  color: #475569;
+
+  font-size: 0.82rem;
+
+  word-break: break-all;
+}
+
+.barcode-print-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .barcode-print-modal {
+    padding: 10px;
+  }
+
+  .barcode-print-dialog {
+    max-height: calc(100vh - 20px);
+
+    border-radius: 13px;
+  }
+
+  .barcode-print-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .barcode-print-checkbox {
+    grid-column: auto;
+  }
+
+  .barcode-print-actions {
+    flex-direction: column-reverse;
+  }
+
+  .barcode-print-actions .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   NOVO PDV PEROWBA - VISUAL PREMIUM
+   ========================================================= */
+
+.pdv-layout {
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.75fr);
+
+  gap: 16px;
+
+  min-height: calc(100vh - 145px);
+
+  padding: 16px;
+
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(14, 165, 233, 0.16),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 100% 100%,
+      rgba(20, 184, 166, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(145deg, #07111f, #0b1728 55%, #0e1c2d);
+
+  box-shadow: 0 26px 65px rgba(15, 23, 42, 0.2);
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   ÁREA ESQUERDA DO PDV
+   ========================================================= */
+
+.pdv-layout > section {
+  min-width: 0;
+
+  padding: 16px;
+
+  border: 1px solid rgba(148, 163, 184, 0.15);
+
+  border-radius: 17px;
+
+  background: rgba(15, 31, 48, 0.82);
+
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  backdrop-filter: blur(14px);
+}
+
+/* =========================================================
+   PESQUISA DO PDV
+   ========================================================= */
+
+.pdv-section-actions {
+  margin-bottom: 12px;
+}
+
+.pdv-search-row {
+  padding: 8px;
+
+  border: 1px solid rgba(56, 189, 248, 0.2);
+
+  border-radius: 14px;
+
+  background: rgba(2, 12, 27, 0.72);
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.pdv-search-row #pdv-search {
+  min-height: 50px;
+
+  border: 1px solid rgba(125, 211, 252, 0.2);
+
+  border-radius: 11px;
+
+  padding: 0 16px;
+
+  background: #f8fafc;
+
+  color: #0f172a;
+
+  font-size: 0.92rem;
+
+  font-weight: 600;
+}
+
+.pdv-search-row #pdv-search::placeholder {
+  color: #64748b;
+
+  font-weight: 450;
+}
+
+.pdv-search-row #pdv-search:focus {
+  border-color: #38bdf8;
+
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.14);
+}
+
+/* =========================================================
+   ATALHOS DO PDV
+   ========================================================= */
+
+.pdv-layout .pdv-shortcuts-hint {
+  padding: 8px 4px 4px;
+
+  color: #94a3b8;
+}
+
+.pdv-layout .pdv-shortcuts-hint kbd {
+  border-color: rgba(148, 163, 184, 0.25);
+
+  background: #17263a;
+
+  color: #e2e8f0;
+
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+}
+
+/* =========================================================
+   PRODUTOS DISPONÍVEIS
+   ========================================================= */
+
+.pdv-layout .product-picker {
+  margin-top: 10px;
+}
+
+.pdv-layout .product-tile {
+  position: relative;
+
+  overflow: hidden;
+
+  min-height: 96px;
+
+  padding: 14px;
+
+  border: 1px solid rgba(148, 163, 184, 0.16);
+
+  border-radius: 13px;
+
+  background: linear-gradient(
+    145deg,
+    rgba(30, 52, 76, 0.92),
+    rgba(17, 34, 54, 0.96)
+  );
+
+  color: #ffffff;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.pdv-layout .product-tile::before {
+  content: "";
+
+  position: absolute;
+
+  width: 70px;
+
+  height: 70px;
+
+  right: -24px;
+
+  top: -26px;
+
+  border-radius: 50%;
+
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.pdv-layout .product-tile:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(56, 189, 248, 0.6);
+
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.2);
+}
+
+.pdv-layout .product-tile strong {
+  position: relative;
+
+  z-index: 1;
+
+  color: #f8fafc;
+
+  font-size: 0.84rem;
+}
+
+.pdv-layout .product-tile span {
+  position: relative;
+
+  z-index: 1;
+
+  color: #94a3b8;
+}
+
+/* =========================================================
+   PAINEL DO CARRINHO
+   ========================================================= */
+
+.pdv-layout > aside.card {
+  min-width: 0;
+
+  border: 1px solid rgba(56, 189, 248, 0.18);
+
+  border-radius: 17px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(17, 38, 60, 0.98),
+    rgba(9, 24, 40, 0.98)
+  );
+
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+
+  color: #f8fafc;
+}
+
+/* =========================================================
+   CABEÇALHO DO CARRINHO
+   ========================================================= */
+
+.pdv-layout > aside.card > .card-header {
+  min-height: 58px;
+
+  padding: 14px 16px;
+
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+
+  background: rgba(4, 17, 30, 0.42);
+}
+
+.pdv-layout > aside.card > .card-header h2 {
+  color: #ffffff;
+
+  font-size: 1rem;
+
+  letter-spacing: 0.01em;
+}
+
+/* =========================================================
+   CORPO DO CARRINHO
+   ========================================================= */
+
+.pdv-layout > aside.card > .card-body {
+  padding: 16px;
+}
+
+.pdv-layout #cart-lines {
+  min-height: 190px;
+
+  max-height: 340px;
+
+  overflow-y: auto;
+
+  padding-right: 4px;
+
+  scrollbar-width: thin;
+}
+
+/* =========================================================
+   LINHAS DO CARRINHO
+   ========================================================= */
+
+.pdv-layout .cart-line {
+  margin-bottom: 7px;
+
+  padding: 11px 10px;
+
+  border: 1px solid rgba(148, 163, 184, 0.12);
+
+  border-radius: 11px;
+
+  background: rgba(30, 52, 76, 0.52);
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.pdv-layout .cart-line:hover {
+  transform: translateX(2px);
+
+  border-color: rgba(56, 189, 248, 0.32);
+
+  background: rgba(35, 63, 91, 0.72);
+}
+
+.pdv-layout .cart-line small {
+  color: #94a3b8;
+}
+
+.pdv-layout .cart-line > strong {
+  color: #7dd3fc;
+
+  font-weight: 800;
+}
+
+/* =========================================================
+   QUANTIDADE DO CARRINHO
+   ========================================================= */
+
+.pdv-layout .cart-qty button {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+
+  background: #172b42;
+
+  color: #ffffff;
+
+  transition: 0.15s ease;
+}
+
+.pdv-layout .cart-qty button:hover {
+  background: #0ea5e9;
+
+  border-color: #0ea5e9;
+}
+
+.pdv-layout .cart-qty span {
+  min-width: 20px;
+
+  text-align: center;
+
+  color: #ffffff;
+
+  font-weight: 800;
+}
+
+/* =========================================================
+   RESUMO FINANCEIRO
+   ========================================================= */
+
+.pdv-layout .summary-list {
+  margin: 18px 0;
+
+  padding: 14px;
+
+  border: 1px solid rgba(56, 189, 248, 0.16);
+
+  border-radius: 14px;
+
+  background: rgba(3, 15, 28, 0.55);
+}
+
+.pdv-layout .summary-row {
+  color: #cbd5e1;
+
+  font-size: 0.78rem;
+}
+
+.pdv-layout .summary-row strong {
+  color: #ffffff;
+}
+
+.pdv-layout .summary-row.total {
+  margin-top: 4px;
+
+  padding-top: 14px;
+
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+
+  color: #ffffff;
+}
+
+.pdv-layout .summary-row.total strong {
+  color: #67e8f9;
+
+  font-size: 1.35rem;
+
+  font-weight: 900;
+}
+
+/* =========================================================
+   FORMULÁRIO DA VENDA
+   ========================================================= */
+
+.pdv-layout > aside label {
+  color: #cbd5e1;
+}
+
+.pdv-layout > aside select,
+.pdv-layout > aside input {
+  border-color: rgba(148, 163, 184, 0.2);
+
+  background: #f8fafc;
+}
+
+/* =========================================================
+   BOTÃO FINALIZAR
+   ========================================================= */
+
+.pdv-layout #finish-sale {
+  min-height: 50px;
+
+  margin-top: 4px;
+
+  border: 1px solid rgba(45, 212, 191, 0.35);
+
+  border-radius: 11px;
+
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+
+  box-shadow: 0 10px 28px rgba(20, 184, 166, 0.2);
+
+  color: #ffffff;
+
+  font-size: 0.88rem;
+
+  font-weight: 850;
+
+  letter-spacing: 0.015em;
+}
+
+.pdv-layout #finish-sale:hover {
+  transform: translateY(-2px);
+
+  background: linear-gradient(135deg, #0d9488, #22c5b5);
+
+  box-shadow: 0 14px 34px rgba(20, 184, 166, 0.28);
+}
+
+/* =========================================================
+   ESTADO VAZIO DO PDV
+   ========================================================= */
+
+.pdv-layout .empty-state {
+  color: #94a3b8;
+}
+
+/* =========================================================
+   RESPONSIVIDADE DO NOVO PDV
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .pdv-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(310px, 0.78fr);
+
+    padding: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  .pdv-layout {
+    grid-template-columns: 1fr;
+
+    min-height: auto;
+
+    padding: 10px;
+
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 650px) {
+  .pdv-layout {
+    gap: 10px;
+
+    padding: 8px;
+  }
+
+  .pdv-layout > section,
+  .pdv-layout > aside.card {
+    border-radius: 13px;
+  }
+
+  .pdv-layout #cart-lines {
+    max-height: none;
+  }
+}
+
+/* =========================================================
+   PDV MOBILE - CARRINHO NO TOPO
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .pdv-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Permite reorganizar os elementos internos do PDV */
+  .pdv-layout > section {
+    display: contents;
+  }
+
+  /* 1º - Carrinho */
+  .pdv-layout > aside.card {
+    order: 1;
+  }
+
+  /* 2º - Pesquisa + botão da câmera */
+  .pdv-section-actions {
+    order: 2;
+  }
+
+  /* Atalhos não são úteis no celular */
+  .pdv-shortcuts-hint {
+    display: none;
+  }
+
+  /* 3º - Produtos */
+  .product-picker {
+    order: 3;
+  }
+
+  /* Mostra aproximadamente 2 itens no carrinho */
+  #cart-lines {
+    height: 236px !important;
+    max-height: 236px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+
+    padding-right: 4px;
+  }
+
+  #cart-lines .cart-line {
+    min-height: 118px;
+    box-sizing: border-box;
+    touch-action: pan-y;
+  }
+
+  .product-picker,
+  .product-tile {
+    touch-action: pan-y;
+  }
+}
