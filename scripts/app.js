@@ -5358,6 +5358,39 @@ if (
               </div>
               <label>Categoria<input id="product-category"></label>
               <label>Marca<input id="product-brand"></label>
+              <label>Cor principal<input id="product-color" placeholder="Ex.: Preto, Azul, Branco"></label>
+
+              <div
+                style="
+                  grid-column:1 / -1;
+                  border:1px solid #dbe3ec;
+                  border-radius:10px;
+                  padding:12px 14px;
+                  background:#fff7ed;
+                ">
+                <label
+                  style="
+                    display:flex;
+                    align-items:flex-start;
+                    gap:10px;
+                    cursor:pointer;
+                    margin:0;
+                  ">
+                  <input
+                    id="product-publish-sports"
+                    type="checkbox"
+                    style="width:18px;height:18px;margin-top:2px;flex:0 0 auto">
+                  <span>
+                    <strong style="display:block;margin-bottom:3px">
+                      Publicar no Perowba Sports
+                    </strong>
+                    <small class="muted">
+                      Ao marcar, este produto ficará selecionado para publicação no catálogo.
+                      A sincronização automática será ativada após configurarmos a integração.
+                    </small>
+                  </span>
+                </label>
+              </div>
 
               <div
                 style="
@@ -5784,6 +5817,8 @@ if (
       barcode: productBarcode,
       category: $("#product-category").value.trim(),
       brand: $("#product-brand").value.trim(),
+      color: $("#product-color").value.trim(),
+      publishToSports: $("#product-publish-sports").checked,
       unit: $("#product-unit").value,
       cost: Number($("#product-cost").value),
       price: Number($("#product-price").value),
@@ -7660,6 +7695,9 @@ if (
             );
             $("#product-category").value = p.category || "";
             $("#product-brand").value = p.brand || "";
+            $("#product-color").value = p.color || "";
+            $("#product-publish-sports").checked =
+              p.publishToSports === true;
             $("#product-unit").value = p.unit;
             $("#product-cost").value = p.cost;
             $("#product-price").value = p.price;
