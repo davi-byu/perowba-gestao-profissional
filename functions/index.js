@@ -4515,3 +4515,121 @@ export const sincronizarProdutoPerowbaSports = onDocumentWritten(
   }
 );
 
+/* =========================================================
+   SINCRONIZAÇÃO INICIAL DOS PRODUTOS ANTIGOS
+   PEROWBA GESTÃO → PEROWBA SPORTS
+   ========================================================= */
+
+export const sincronizarProdutosAntigosPerowbaSports = onCall(
+  {
+    ...callableOptions,
+    timeoutSeconds: 540,
+    memory: "512MiB",
+    secrets: [sportsServiceAccountSecret]
+  },
+  async request => {
+    const uid = requireAuth(request);
+    const profile = await getProfile(uid);
+
+    requireRole(profile, ["admin"]);
+
+    // Segurança: somente a empresa autorizada pode sincronizar.
+    if (profile.companyId !== "perowba") {
+      throw new HttpsError(
+        "permission-denied",
+        "Esta empresa não está autorizada a sincronizar com o Perowba Sports."
+      );
+    }
+
+    const empresaSnapshot = await db
+      .doc("empresas/perowba")
+      .get();
+
+    const integracao = empresaSnapshot.data()?.sportsIntegration;
+
+    if (
+      integracao?.enabled !== true ||
+      integracao?.sportsCompanyId !== SPORTS_COMPANY_ID
+    ) {
+      throw new HttpsError(
+        "failed-precondition",
+        "A integração com o Perowba Sports não está habilitada corretamente."
+      );
+    }
+
+    const produtosSnapshot = await db
+      .collection("empresas/perowba/produtos")
+      .get();
+
+    const sportsDb = obterFirestoreSports();
+
+    let sincronizados = 0;
+    let ignorados = 0;
+
+    let batch = sportsDb.batch();
+    let operacoes = 0;
+
+    for (const documento of produtosSnapshot.docs) {
+      const produto = documento.data();
+
+      if (
+        produto.publishToSports !== true ||
+        produto.active !== true
+      ) {
+        ignorados++;
+        continue;
+      }
+
+      const sku = String(produto.sku || "").trim();
+      const cor = String(produto.color || "").trim();
+
+      if (!sku || !cor) {
+        ignorados++;
+        continue;
+      }
+
+      const productId = documento.id;
+      const sportsProductId = `gestao_perowba_${productId}`;
+
+      const sportsRef = sportsDb.doc(
+        `empresas/${SPORTS_COMPANY_ID}/produtos/${sportsProductId}`
+      );
+
+      const produtoSports = montarProdutoSports(
+        produto,
+        "perowba",
+        productId
+      );
+
+      batch.set(
+        sportsRef,
+        {
+          ...produtoSports,
+          criadoEm: nowISO()
+        },
+        { merge: true }
+      );
+
+      sincronizados++;
+      operacoes++;
+
+      if (operacoes === 400) {
+        await batch.commit();
+        batch = sportsDb.batch();
+        operacoes = 0;
+      }
+    }
+
+    if (operacoes > 0) {
+      await batch.commit();
+    }
+
+    return {
+      sucesso: true,
+      sincronizados,
+      ignorados,
+      mensagem: `${sincronizados} produto(s) sincronizado(s); ${ignorados} ignorado(s).`
+    };
+  }
+);
+
