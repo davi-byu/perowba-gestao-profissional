@@ -976,27 +976,32 @@ export class FirebaseService {
       return Promise.resolve();
     }
 
+    // Congela o estado desta solicitação. Sem a cópia, uma alteração
+    // posterior na tela poderia modificar os dados ainda aguardando a fila.
+    const stateSnapshot = clone(state);
 
-    this.syncChain =
-      this.syncChain
-
-        .then(
-          () =>
-            this.#syncStateNow(
-              state,
-              currentUser
-            )
+    const syncOperation = this.syncChain.then(
+      () =>
+        this.#syncStateNow(
+          stateSnapshot,
+          currentUser
         )
+    );
 
-        .catch(
-          error =>
-            this.errorHandler(
-              error
-            )
+    // Mantém a fila disponível para as próximas gravações, mas devolve
+    // a rejeição ao chamador atual para que a interface não informe sucesso.
+    this.syncChain = syncOperation.catch(error => {
+      try {
+        this.errorHandler(error);
+      } catch (handlerError) {
+        console.error(
+          "Erro ao tratar falha de sincronização:",
+          handlerError
         );
+      }
+    });
 
-
-    return this.syncChain;
+    return syncOperation;
   }
 
 

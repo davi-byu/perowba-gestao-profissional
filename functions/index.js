@@ -4394,6 +4394,63 @@ function montarProdutoSports(produto, companyId, productId) {
   };
 }
 
+
+function normalizarSku(valor) {
+  return String(valor || "").trim().toUpperCase();
+}
+
+async function localizarOuCriarReferenciaSports(
+  sportsDb, sku, companyId, productId
+) {
+  const produtosRef = sportsDb.collection(
+    `empresas/${SPORTS_COMPANY_ID}/produtos`
+  );
+
+  const snapshot = await produtosRef.get();
+  const documentos = snapshot.docs;
+
+  // Primeiro procura um vínculo já existente.
+  const vinculado = documentos.find(docSnap => {
+    const origem = docSnap.data().origemGestao;
+
+    return (
+      origem?.companyId === companyId &&
+      origem?.productId === productId
+    );
+  });
+
+  if (vinculado) return vinculado.ref;
+
+  // Depois procura um produto antigo pelo SKU.
+  const skuNormalizado = normalizarSku(sku);
+
+  const candidatos = documentos.filter(docSnap => {
+    const dados = docSnap.data();
+
+    if (normalizarSku(dados.sku) !== skuNormalizado) {
+      return false;
+    }
+
+    const origem = dados.origemGestao;
+
+    return !origem?.companyId && !origem?.productId;
+  });
+
+  if (candidatos.length > 1) {
+    throw new Error(
+      `SKU ${sku} encontrado em vários produtos no Perowba Sports.`
+    );
+  }
+
+  if (candidatos.length === 1) {
+    return candidatos[0].ref;
+  }
+
+  // Se não existe, mantém o padrão de ID anterior.
+  return produtosRef.doc(`gestao_${companyId}_${productId}`);
+}
+
+
 export const sincronizarProdutoPerowbaSports = onDocumentWritten(
   {
     document: "empresas/{companyId}/produtos/{productId}",
@@ -4404,6 +4461,9 @@ export const sincronizarProdutoPerowbaSports = onDocumentWritten(
   },
   async event => {
     const { companyId, productId } = event.params;
+    console.info(
+      `[Sports] Evento recebido: empresa=${companyId}, produto=${productId}, tipo=${event.data?.after?.exists ? "criado/alterado" : "excluído"}`
+    );
 
     // Lê o estado atual para evitar que eventos atrasados sobrescrevam
     // uma alteração mais recente do mesmo produto.
@@ -4424,19 +4484,28 @@ export const sincronizarProdutoPerowbaSports = onDocumentWritten(
       integracao?.enabled !== true ||
       integracao?.sportsCompanyId !== SPORTS_COMPANY_ID
     ) {
+      console.warn(
+        `[Sports] Sincronização ignorada: integração não habilitada ou empresa de destino incorreta. empresa=${companyId}`
+      );
       return;
     }
 
     const sportsDb = obterFirestoreSports();
-    const sportsProductId = `gestao_${companyId}_${productId}`;
-    const sportsRef = sportsDb.doc(
-      `empresas/${SPORTS_COMPANY_ID}/produtos/${sportsProductId}`
-    );
+    const sku = normalizarSku(produto?.sku);
 
+    // Localiza primeiro pelo vínculo de origem e, em seguida, pelo SKU.
+    // A função auxiliar interrompe a operação se houver SKU duplicado.
+    const sportsRef = await localizarOuCriarReferenciaSports(
+      sportsDb,
+      sku,
+      companyId,
+      productId
+    );
     const atualSports = await sportsRef.get();
 
-    // Desmarcar publicação desativa apenas o produto já vinculado.
-    if (produto && produto.publishToSports !== true) {
+    // Exclusão, despublicação ou inativação desativa somente um documento
+    // que já esteja vinculado a este produto do Gestão.
+    if (!produto || produto.publishToSports !== true || produto.active !== true) {
       if (atualSports.exists) {
         const origem = atualSports.data()?.origemGestao;
         if (origem?.companyId === companyId && origem?.productId === productId) {
@@ -4446,45 +4515,16 @@ export const sincronizarProdutoPerowbaSports = onDocumentWritten(
             sincronizadoEm: nowISO(),
             atualizadoEm: nowISO()
           }, { merge: true });
+          console.info(`[Sports] Produto vinculado desativado: ${sportsRef.id}`);
         }
       }
       return;
     }
 
-    // Exclusão no Gestão desativa o vínculo no catálogo, sem apagar fotos.
-    if (!produto) {
-      if (atualSports.exists) {
-        const origem = atualSports.data()?.origemGestao;
-        if (origem?.companyId === companyId && origem?.productId === productId) {
-          await sportsRef.set({
-            ativo: false,
-            sincronizacaoAtiva: false,
-            sincronizadoEm: nowISO(),
-            atualizadoEm: nowISO()
-          }, { merge: true });
-        }
-      }
-      return;
-    }
-
-    // SKU e cor são requisitos para evitar cadastros ambíguos no catálogo.
-    const sku = String(produto.sku || "").trim();
-    const cor = String(produto.color || "").trim();
-
-    if (produto.active === true && (!sku || !cor)) {
-      if (atualSports.exists) {
-        const origem = atualSports.data()?.origemGestao;
-        if (origem?.companyId === companyId && origem?.productId === productId) {
-          await sportsRef.set({
-            ativo: false,
-            sincronizacaoAtiva: false,
-            sincronizadoEm: nowISO(),
-            atualizadoEm: nowISO()
-          }, { merge: true });
-        }
-      }
+    // SKU é a chave de identificação. Cor é opcional.
+    if (!sku) {
       console.warn(
-        `Produto ${productId} não publicado: SKU ou cor ausente.`
+        `[Sports] Produto ${productId} não publicado: SKU ausente.`
       );
       return;
     }
@@ -4501,17 +4541,29 @@ export const sincronizarProdutoPerowbaSports = onDocumentWritten(
       : {};
 
     await sportsRef.set({
-      ...dadosSports,
-      descricao: camposEditoriais.descricao || "",
-      condicao: camposEditoriais.condicao || "novo",
-      destaque: camposEditoriais.destaque === true,
-      imagem: camposEditoriais.imagem || "",
-      imagemCaminho: camposEditoriais.imagemCaminho || null,
-      imagens: Array.isArray(camposEditoriais.imagens)
-        ? camposEditoriais.imagens
-        : [],
-      criadoEm: camposEditoriais.criadoEm || nowISO()
-    }, { merge: true });
+  ...dadosSports,
+
+  // Mantém o nome cadastrado originalmente no Sports.
+  // Somente produtos novos recebem o nome do Gestão.
+  nome: atualSports.exists
+    ? (camposEditoriais.nome || dadosSports.nome)
+    : dadosSports.nome,
+
+  // Preserva os dados editoriais do Sports.
+  descricao: camposEditoriais.descricao || "",
+  condicao: camposEditoriais.condicao || "novo",
+  destaque: camposEditoriais.destaque === true,
+  imagem: camposEditoriais.imagem || "",
+  imagemCaminho: camposEditoriais.imagemCaminho || null,
+  imagens: Array.isArray(camposEditoriais.imagens)
+    ? camposEditoriais.imagens
+    : [],
+  criadoEm: camposEditoriais.criadoEm || nowISO()
+}, { merge: true });
+
+    console.info(
+      `[Sports] Produto sincronizado: SKU=${sku}, documento=${sportsRef.id}, existente=${atualSports.exists}`
+    );
   }
 );
 
@@ -4533,7 +4585,6 @@ export const sincronizarProdutosAntigosPerowbaSports = onCall(
 
     requireRole(profile, ["admin"]);
 
-    // Segurança: somente a empresa autorizada pode sincronizar.
     if (profile.companyId !== "perowba") {
       throw new HttpsError(
         "permission-denied",
@@ -4541,10 +4592,7 @@ export const sincronizarProdutosAntigosPerowbaSports = onCall(
       );
     }
 
-    const empresaSnapshot = await db
-      .doc("empresas/perowba")
-      .get();
-
+    const empresaSnapshot = await db.doc("empresas/perowba").get();
     const integracao = empresaSnapshot.data()?.sportsIntegration;
 
     if (
@@ -4562,12 +4610,18 @@ export const sincronizarProdutosAntigosPerowbaSports = onCall(
       .get();
 
     const sportsDb = obterFirestoreSports();
+    const sportsProdutosRef = sportsDb.collection(
+      `empresas/${SPORTS_COMPANY_ID}/produtos`
+    );
+    const sportsSnapshot = await sportsProdutosRef.get();
+    const sportsDocs = sportsSnapshot.docs;
 
     let sincronizados = 0;
     let ignorados = 0;
-
     let batch = sportsDb.batch();
     let operacoes = 0;
+
+    const documentosUsados = new Set();
 
     for (const documento of produtosSnapshot.docs) {
       const produto = documento.data();
@@ -4580,21 +4634,62 @@ export const sincronizarProdutosAntigosPerowbaSports = onCall(
         continue;
       }
 
-      const sku = String(produto.sku || "").trim();
-      const cor = String(produto.color || "").trim();
-
-      if (!sku || !cor) {
+      const sku = normalizarSku(produto.sku);
+      if (!sku) {
         ignorados++;
+        console.warn(
+          `[Sports] Produto antigo ${documento.id} ignorado: SKU ausente.`
+        );
         continue;
       }
 
       const productId = documento.id;
-      const sportsProductId = `gestao_perowba_${productId}`;
+      const vinculado = sportsDocs.find(docSnap => {
+        const origem = docSnap.data().origemGestao;
+        return (
+          origem?.companyId === "perowba" &&
+          origem?.productId === productId
+        );
+      });
 
-      const sportsRef = sportsDb.doc(
-        `empresas/${SPORTS_COMPANY_ID}/produtos/${sportsProductId}`
-      );
+      let sportsRef;
+      if (vinculado) {
+        sportsRef = vinculado.ref;
+      } else {
+        const candidatos = sportsDocs.filter(docSnap => {
+          const dados = docSnap.data();
+          const origem = dados.origemGestao;
+          return (
+            normalizarSku(dados.sku) === sku &&
+            !origem?.companyId &&
+            !origem?.productId
+          );
+        });
 
+        if (candidatos.length > 1) {
+          ignorados++;
+          console.warn(
+            `[Sports] Produto ${productId} ignorado: SKU ${sku} duplicado no catálogo Sports.`
+          );
+          continue;
+        }
+
+        sportsRef = candidatos.length === 1
+          ? candidatos[0].ref
+          : sportsProdutosRef.doc(`gestao_perowba_${productId}`);
+      }
+
+      if (documentosUsados.has(sportsRef.id)) {
+        ignorados++;
+        console.warn(
+          `[Sports] Produto ${productId} ignorado: documento ${sportsRef.id} já associado a outro produto nesta execução.`
+        );
+        continue;
+      }
+      documentosUsados.add(sportsRef.id);
+
+      const existente = sportsDocs.find(docSnap => docSnap.id === sportsRef.id);
+      const camposEditoriais = existente ? existente.data() : {};
       const produtoSports = montarProdutoSports(
         produto,
         "perowba",
@@ -4605,7 +4700,15 @@ export const sincronizarProdutosAntigosPerowbaSports = onCall(
         sportsRef,
         {
           ...produtoSports,
-          criadoEm: nowISO()
+          descricao: camposEditoriais.descricao || "",
+          condicao: camposEditoriais.condicao || "novo",
+          destaque: camposEditoriais.destaque === true,
+          imagem: camposEditoriais.imagem || "",
+          imagemCaminho: camposEditoriais.imagemCaminho || null,
+          imagens: Array.isArray(camposEditoriais.imagens)
+            ? camposEditoriais.imagens
+            : [],
+          criadoEm: camposEditoriais.criadoEm || nowISO()
         },
         { merge: true }
       );
@@ -4632,4 +4735,3 @@ export const sincronizarProdutosAntigosPerowbaSports = onCall(
     };
   }
 );
-

@@ -5714,6 +5714,10 @@ if (
   async function saveProduct(event) {
     event.preventDefault();
 
+    // Guarda uma cópia para restaurar a tela e o armazenamento local
+    // caso o Firestore rejeite a gravação.
+    const stateBeforeSave = structuredClone(state);
+
     if (!canManage()) {
       return toast(
         "Seu perfil não pode cadastrar ou editar produtos."
@@ -5979,13 +5983,45 @@ if (
       );
     }
 
-    await saveState();
+    try {
+      // O sucesso só é informado depois que o Firebase confirmar a gravação.
+      await saveState();
 
-    toast(
-      "Produto salvo com sucesso."
-    );
+      toast(
+        "Produto salvo com sucesso."
+      );
 
-    renderProducts();
+      renderProducts();
+    } catch (error) {
+      console.error(
+        "Falha ao salvar produto no Firebase:",
+        error
+      );
+
+      // Desfaz a alteração otimista para que o valor antigo não fique
+      // aparentando estar salvo quando a nuvem recusou a operação.
+      state = stateBeforeSave;
+
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(stateBeforeSave)
+        );
+      } catch (storageError) {
+        console.error(
+          "Não foi possível restaurar o armazenamento local:",
+          storageError
+        );
+      }
+
+      renderProducts();
+
+      toast(
+        error?.message
+          ? `Não foi possível salvar o produto: ${error.message}`
+          : "Não foi possível confirmar o salvamento no Firebase. Confira sua conexão e tente novamente."
+      );
+    }
   }
 
   // =========================================================
