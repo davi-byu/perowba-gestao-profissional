@@ -3,6 +3,9 @@ import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
+import { defineSecret } from "firebase-functions/params";
+import { cert, getApps as getAdminApps, initializeApp as initializeAdminApp } from "firebase-admin/app";
 
 initializeApp();
 
@@ -1758,6 +1761,8 @@ onCall(
         data.reason || ""
       ).trim();
 
+    const size = String(data.size || "").trim();
+
     const rawQuantity =
       positiveInteger(
         data.quantity,
@@ -1855,14 +1860,31 @@ onCall(
         const product =
           productSnapshot.data();
 
-        const before =
-          Number(
-            product.stock || 0
-          );
+        const before = Number(product.stock || 0);
+        const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+        let updatedSizes = sizes;
+        let after;
+        let sizeBefore = null;
+        let sizeAfter = null;
 
-        const after =
-          before + quantity;
-
+        if (sizes.length) {
+          if (!size) {
+            throw new HttpsError("invalid-argument", "Selecione o tamanho para movimentar este produto.");
+          }
+          const index = sizes.findIndex(item => String(item.size || "").trim() === size);
+          if (index < 0) {
+            throw new HttpsError("not-found", "O tamanho selecionado não existe neste produto.");
+          }
+          updatedSizes = sizes.map((item, i) => {
+            if (i !== index) return item;
+            sizeBefore = Number(item.stock || 0);
+            sizeAfter = sizeBefore + quantity;
+            return { ...item, stock: sizeAfter };
+          });
+          after = updatedSizes.reduce((sum, item) => sum + Number(item.stock || 0), 0);
+        } else {
+          after = before + quantity;
+        }
 
         const allowNegative =
           company.allowNegativeStock ??
@@ -1872,7 +1894,7 @@ onCall(
 
         if (
           !allowNegative &&
-          after < 0
+          (after < 0 || (sizeAfter !== null && sizeAfter < 0))
         ) {
           throw new HttpsError(
             "failed-precondition",
@@ -1895,6 +1917,7 @@ onCall(
           productRef,
           {
             stock: after,
+            ...(sizes.length ? { sizes: updatedSizes } : {}),
             updatedAt: createdAt
           }
         );
@@ -1911,9 +1934,13 @@ onCall(
 
             type,
 
+            size: size || null,
+
             quantity,
 
             before,
+
+            ...(size ? { sizeBefore, sizeAfter } : {}),
 
             after,
 
@@ -1992,6 +2019,8 @@ export const receberCompra = onCall(
       String(
         data.productId || ""
       ).trim();
+
+    const size = String(data.size || "").trim();
 
     const quantity =
       positiveInteger(
@@ -2074,13 +2103,31 @@ export const receberCompra = onCall(
         const product =
           productSnapshot.data();
 
-        const before =
-          Number(
-            product.stock || 0
-          );
+        const before = Number(product.stock || 0);
+        const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+        let updatedSizes = sizes;
+        let after;
+        let sizeBefore = null;
+        let sizeAfter = null;
 
-        const after =
-          before + quantity;
+        if (sizes.length) {
+          if (!size) {
+            throw new HttpsError("invalid-argument", "Selecione o tamanho para receber este produto.");
+          }
+          const index = sizes.findIndex(item => String(item.size || "").trim() === size);
+          if (index < 0) {
+            throw new HttpsError("not-found", "O tamanho selecionado não existe neste produto.");
+          }
+          updatedSizes = sizes.map((item, i) => {
+            if (i !== index) return item;
+            sizeBefore = Number(item.stock || 0);
+            sizeAfter = sizeBefore + quantity;
+            return { ...item, stock: sizeAfter };
+          });
+          after = updatedSizes.reduce((sum, item) => sum + Number(item.stock || 0), 0);
+        } else {
+          after = before + quantity;
+        }
 
         const total =
           quantity * unitCost +
@@ -2109,8 +2156,8 @@ export const receberCompra = onCall(
         transaction.update(
           productRef,
           {
-            stock:
-              after,
+            stock: after,
+            ...(sizes.length ? { sizes: updatedSizes } : {}),
 
             cost:
               unitCost,
@@ -2136,6 +2183,8 @@ export const receberCompra = onCall(
             productName:
               product.name ||
               "Produto",
+
+            size: size || null,
 
             qty:
               quantity,
@@ -2171,6 +2220,9 @@ export const receberCompra = onCall(
 
             type:
               "Entrada por compra",
+
+            size: size || null,
+            ...(size ? { sizeBefore, sizeAfter } : {}),
 
             quantity,
 
@@ -4257,3 +4309,209 @@ onCall(
     };
   }
 );
+
+/* =========================================================
+   INTEGRAÇÃO PEROWBA GESTÃO → PEROWBA SPORTS
+   A credencial do projeto Sports é armazenada no Secret Manager.
+   ========================================================= */
+
+const sportsServiceAccountSecret = defineSecret(
+  "SPORTS_FIREBASE_SERVICE_ACCOUNT_JSON"
+);
+
+const SPORTS_PROJECT_ID = "perowba-sports";
+const SPORTS_COMPANY_ID = "perowba-sports";
+
+function obterFirestoreSports() {
+  let serviceAccount;
+
+  try {
+    serviceAccount = JSON.parse(
+      sportsServiceAccountSecret.value()
+    );
+  } catch {
+    throw new Error(
+      "O secret SPORTS_FIREBASE_SERVICE_ACCOUNT_JSON não contém um JSON válido."
+    );
+  }
+
+  if (serviceAccount.project_id !== SPORTS_PROJECT_ID) {
+    throw new Error(
+      `A credencial informada não pertence ao projeto ${SPORTS_PROJECT_ID}.`
+    );
+  }
+
+  const appName = "perowba-sports-integration";
+  let sportsApp = getAdminApps().find(
+    app => app.name === appName
+  );
+
+  if (!sportsApp) {
+    sportsApp = initializeAdminApp(
+      {
+        credential: cert(serviceAccount),
+        projectId: SPORTS_PROJECT_ID
+      },
+      appName
+    );
+  }
+
+  return getFirestore(sportsApp);
+}
+
+function montarProdutoSports(produto, companyId, productId) {
+  const tamanhos = Array.isArray(produto.sizes)
+    ? produto.sizes
+    : [];
+
+  const variacoes = tamanhos.map(item => ({
+    tamanho: String(item.size ?? "Único").trim(),
+    estoque: Math.max(0, Number(item.stock) || 0),
+    cor: String(produto.color || "").trim(),
+    preco: Math.max(0, Number(produto.price) || 0)
+  }));
+
+  const estoqueCalculado = variacoes.length
+    ? variacoes.reduce((total, item) => total + item.estoque, 0)
+    : Math.max(0, Number(produto.stock) || 0);
+
+  return {
+    nome: String(produto.name || "").trim(),
+    sku: String(produto.sku || "").trim(),
+    cor: String(produto.color || "").trim(),
+    cores: produto.color ? [String(produto.color).trim()] : [],
+    categoria: String(produto.category || "").trim(),
+    marca: String(produto.brand || "").trim(),
+    preco: Math.max(0, Number(produto.price) || 0),
+    variacoes,
+    tamanhos: [...new Set(variacoes.map(item => item.tamanho))],
+    estoque: estoqueCalculado,
+    ativo: produto.active === true && produto.publishToSports === true,
+    origemGestao: { companyId, productId },
+    sincronizacaoAtiva: produto.active === true && produto.publishToSports === true,
+    sincronizadoEm: nowISO(),
+    atualizadoEm: nowISO()
+  };
+}
+
+export const sincronizarProdutoPerowbaSports = onDocumentWritten(
+  {
+    document: "empresas/{companyId}/produtos/{productId}",
+    region: "southamerica-east1",
+    timeoutSeconds: 60,
+    memory: "256MiB",
+    secrets: [sportsServiceAccountSecret]
+  },
+  async event => {
+    const { companyId, productId } = event.params;
+
+    // Lê o estado atual para evitar que eventos atrasados sobrescrevam
+    // uma alteração mais recente do mesmo produto.
+    const produtoSnapshot = await db.doc(
+      `empresas/${companyId}/produtos/${productId}`
+    ).get();
+    const produto = produtoSnapshot.exists
+      ? produtoSnapshot.data()
+      : null;
+
+    const empresaSnapshot = await db.doc(
+      `empresas/${companyId}`
+    ).get();
+
+    const integracao = empresaSnapshot.data()?.sportsIntegration;
+
+    if (
+      integracao?.enabled !== true ||
+      integracao?.sportsCompanyId !== SPORTS_COMPANY_ID
+    ) {
+      return;
+    }
+
+    const sportsDb = obterFirestoreSports();
+    const sportsProductId = `gestao_${companyId}_${productId}`;
+    const sportsRef = sportsDb.doc(
+      `empresas/${SPORTS_COMPANY_ID}/produtos/${sportsProductId}`
+    );
+
+    const atualSports = await sportsRef.get();
+
+    // Desmarcar publicação desativa apenas o produto já vinculado.
+    if (produto && produto.publishToSports !== true) {
+      if (atualSports.exists) {
+        const origem = atualSports.data()?.origemGestao;
+        if (origem?.companyId === companyId && origem?.productId === productId) {
+          await sportsRef.set({
+            ativo: false,
+            sincronizacaoAtiva: false,
+            sincronizadoEm: nowISO(),
+            atualizadoEm: nowISO()
+          }, { merge: true });
+        }
+      }
+      return;
+    }
+
+    // Exclusão no Gestão desativa o vínculo no catálogo, sem apagar fotos.
+    if (!produto) {
+      if (atualSports.exists) {
+        const origem = atualSports.data()?.origemGestao;
+        if (origem?.companyId === companyId && origem?.productId === productId) {
+          await sportsRef.set({
+            ativo: false,
+            sincronizacaoAtiva: false,
+            sincronizadoEm: nowISO(),
+            atualizadoEm: nowISO()
+          }, { merge: true });
+        }
+      }
+      return;
+    }
+
+    // SKU e cor são requisitos para evitar cadastros ambíguos no catálogo.
+    const sku = String(produto.sku || "").trim();
+    const cor = String(produto.color || "").trim();
+
+    if (produto.active === true && (!sku || !cor)) {
+      if (atualSports.exists) {
+        const origem = atualSports.data()?.origemGestao;
+        if (origem?.companyId === companyId && origem?.productId === productId) {
+          await sportsRef.set({
+            ativo: false,
+            sincronizacaoAtiva: false,
+            sincronizadoEm: nowISO(),
+            atualizadoEm: nowISO()
+          }, { merge: true });
+        }
+      }
+      console.warn(
+        `Produto ${productId} não publicado: SKU ou cor ausente.`
+      );
+      return;
+    }
+
+    const dadosSports = montarProdutoSports(
+      produto,
+      companyId,
+      productId
+    );
+
+    // Preserva campos editoriais mantidos pelo administrador do Sports.
+    const camposEditoriais = atualSports.exists
+      ? atualSports.data()
+      : {};
+
+    await sportsRef.set({
+      ...dadosSports,
+      descricao: camposEditoriais.descricao || "",
+      condicao: camposEditoriais.condicao || "novo",
+      destaque: camposEditoriais.destaque === true,
+      imagem: camposEditoriais.imagem || "",
+      imagemCaminho: camposEditoriais.imagemCaminho || null,
+      imagens: Array.isArray(camposEditoriais.imagens)
+        ? camposEditoriais.imagens
+        : [],
+      criadoEm: camposEditoriais.criadoEm || nowISO()
+    }, { merge: true });
+  }
+);
+

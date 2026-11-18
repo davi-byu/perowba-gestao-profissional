@@ -7860,6 +7860,13 @@ if (
                 </select>
               </label>
 
+              <label id="stock-size-field" hidden>
+                Tamanho*
+                <select id="stock-size">
+                  <option value="">Selecione o tamanho</option>
+                </select>
+              </label>
+
               <label>
                 Tipo*
                 <select id="stock-type">
@@ -7981,6 +7988,20 @@ if (
       </article>
     `;
 
+    const updateStockSizeOptions = () => {
+      const product = state.products.find(p => p.id === $("#stock-product").value);
+      const sizes = Array.isArray(product?.sizes) ? product.sizes : [];
+      const field = $("#stock-size-field");
+      const select = $("#stock-size");
+      field.hidden = sizes.length === 0;
+      select.required = sizes.length > 0;
+      select.innerHTML = `<option value="">Selecione o tamanho</option>` + sizes.map(item =>
+        `<option value="${escapeHTML(String(item.size))}">${escapeHTML(String(item.size))} (estoque: ${Number(item.stock || 0)})</option>`
+      ).join("");
+    };
+    $("#stock-product").addEventListener("change", updateStockSizeOptions);
+    updateStockSizeOptions();
+
     $("#stock-form")
       .addEventListener(
         "submit",
@@ -8021,6 +8042,8 @@ if (
                   quantity:
                     rawQty,
 
+                  size: $("#stock-size").value || null,
+
                   reason:
                     $("#stock-reason")
                       .value
@@ -8057,20 +8080,34 @@ if (
               ? -rawQty
               : rawQty;
 
+          const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
+          const selectedSize = $("#stock-size").value;
+          const sizeIndex = productSizes.findIndex(item => String(item.size) === selectedSize);
+          if (productSizes.length && sizeIndex < 0) {
+            return toast("Selecione um tamanho válido para este produto.");
+          }
+          const sizeCurrent = sizeIndex >= 0 ? Number(productSizes[sizeIndex].stock || 0) : null;
+          const sizeNext = sizeIndex >= 0 ? sizeCurrent + qty : null;
+          const nextStock = productSizes.length
+            ? productSizes.reduce((sum, item, i) => sum + (i === sizeIndex ? sizeNext : Number(item.stock || 0)), 0)
+            : product.stock + qty;
+
           if (
             !state.settings.allowNegativeStock &&
-            product.stock + qty < 0
+            (nextStock < 0 || (sizeNext !== null && sizeNext < 0))
           ) {
             return toast(
               "Esta movimentação deixaria o estoque negativo."
             );
           }
 
-          const before =
-            product.stock;
-
-          product.stock +=
-            qty;
+          const before = product.stock;
+          if (productSizes.length) {
+            product.sizes = productSizes.map((item, i) => i === sizeIndex ? { ...item, stock: sizeNext } : item);
+            product.stock = nextStock;
+          } else {
+            product.stock += qty;
+          }
 
           product.updatedAt =
             nowISO();
@@ -8086,6 +8123,8 @@ if (
               product.name,
 
             type,
+
+            size: selectedSize || null,
 
             quantity:
               qty,
@@ -8579,6 +8618,13 @@ if (
                 </select>
               </label>
 
+              <label id="purchase-size-field" hidden>
+                Tamanho*
+                <select id="purchase-size">
+                  <option value="">Selecione o tamanho</option>
+                </select>
+              </label>
+
               <label>
                 Quantidade
                 <input
@@ -8708,6 +8754,20 @@ if (
         }
       );
 
+    const updatePurchaseSizeOptions = () => {
+      const product = state.products.find(p => p.id === $("#purchase-product").value);
+      const sizes = Array.isArray(product?.sizes) ? product.sizes : [];
+      const field = $("#purchase-size-field");
+      const select = $("#purchase-size");
+      field.hidden = sizes.length === 0;
+      select.required = sizes.length > 0;
+      select.innerHTML = `<option value="">Selecione o tamanho</option>` + sizes.map(item =>
+        `<option value="${escapeHTML(String(item.size))}">${escapeHTML(String(item.size))} (estoque: ${Number(item.stock || 0)})</option>`
+      ).join("");
+    };
+    $("#purchase-product").addEventListener("change", updatePurchaseSizeOptions);
+    updatePurchaseSizeOptions();
+
     $("#purchase-product")
       .dispatchEvent(
         new Event("change")
@@ -8774,6 +8834,8 @@ if (
                   quantity:
                     qty,
 
+                  size: $("#purchase-size").value || null,
+
                   unitCost,
 
                   freight,
@@ -8802,6 +8864,13 @@ if (
             return;
           }
 
+          const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
+          const selectedSize = $("#purchase-size").value;
+          const sizeIndex = productSizes.findIndex(item => String(item.size) === selectedSize);
+          if (productSizes.length && sizeIndex < 0) {
+            return toast("Selecione um tamanho válido para receber este produto.");
+          }
+
           const purchase = {
             id:
               uid("com"),
@@ -8817,6 +8886,8 @@ if (
 
             productName:
               product.name,
+
+            size: selectedSize || null,
 
             qty,
 
@@ -8838,11 +8909,13 @@ if (
               nowISO()
           };
 
-          const before =
-            product.stock;
-
-          product.stock +=
-            qty;
+          const before = product.stock;
+          if (productSizes.length) {
+            product.sizes = productSizes.map((item, i) => i === sizeIndex ? { ...item, stock: Number(item.stock || 0) + qty } : item);
+            product.stock = product.sizes.reduce((sum, item) => sum + Number(item.stock || 0), 0);
+          } else {
+            product.stock += qty;
+          }
 
           product.cost =
             unitCost;
@@ -8868,6 +8941,8 @@ if (
 
               type:
                 "Entrada por compra",
+
+              size: selectedSize || null,
 
               quantity:
                 qty,

@@ -1,30 +1,30 @@
 # Integração Perowba Gestão → Perowba Sports
 
-## Estado desta etapa
+## O que foi implementado
 
-Esta versão prepara a publicação de produtos e a sincronização de dados/estoque por gatilho do Firestore. O Gestão continua sendo a fonte oficial do estoque. O Sports preserva as imagens e a descrição editorial já cadastradas.
+- Trigger `sincronizarProdutoPerowbaSports` no Cloud Functions do projeto `perowba-finance`.
+- A função observa `empresas/{companyId}/produtos/{productId}`.
+- A publicação exige configuração explícita no documento da empresa (`sportsIntegration.enabled` e `sportsIntegration.sportsCompanyId`) e `publishToSports: true` no produto.
+- Para produtos ativos, SKU e cor são obrigatórios.
+- O documento de destino é `empresas/perowba-sports/produtos/gestao_{companyId}_{productId}` no projeto `perowba-sports`.
+- A função envia nome, SKU, cor, categoria, marca, preço, variações por tamanho e estoque.
+- Fotos, descrição, condição e destaque já mantidos no Sports são preservados em atualizações.
+- Desmarcar publicação, desativar o produto ou excluí-lo no Gestão desativa o produto vinculado no Sports; o documento e as imagens não são apagados.
+- O estoque só é refletido quando as rotinas do Gestão atualizam o documento do produto. Os fluxos de venda, cancelamento, movimentação e recebimento devem ser testados individualmente.
 
-## Regras
+## Configuração obrigatória antes do deploy
 
-- A sincronização só ocorre quando o documento da empresa no projeto `perowba-finance`, em `empresas/{companyId}`, possui `sportsIntegration.enabled: true` e `sportsIntegration.sportsCompanyId: "perowba-sports"`.
-- O produto precisa ter `publishToSports: true`, SKU e cor.
-- O destino é `empresas/perowba-sports/produtos` no projeto Firebase `perowba-sports`.
-- O documento de destino guarda `origemGestao.companyId` e `origemGestao.productId` para manter o vínculo exato.
-- Produtos não vinculados não são alterados.
-- Despublicar ou desativar um produto vinculado o deixa inativo no catálogo; não apaga o documento nem as imagens.
-
-## Configuração obrigatória no Firebase
-
-1. No projeto Firebase `perowba-sports`, crie/obtenha uma chave de conta de serviço dedicada para integração servidor-servidor. Conceda a essa conta a permissão mínima necessária para ler/gravar Firestore (por exemplo, Cloud Datastore User).
-2. No projeto `perowba-finance`, configure o Secret Manager para a função:
+1. No projeto Firebase `perowba-sports`, crie uma conta de serviço dedicada à integração. Conceda somente a permissão necessária para gravar e ler no Firestore, conforme a política IAM da organização.
+2. Gere a chave JSON dessa conta e mantenha-a fora do repositório e dos arquivos do site.
+3. No terminal, dentro de `functions` do projeto Gestão, selecione o projeto correto e cadastre o segredo:
 
    ```bash
+   firebase use perowba-finance
    firebase functions:secrets:set SPORTS_FIREBASE_SERVICE_ACCOUNT_JSON
    ```
 
-   Cole o conteúdo JSON completo da chave de serviço do projeto `perowba-sports`. Nunca coloque esse JSON no site, no repositório ou no ZIP.
-
-3. No Firestore do projeto `perowba-finance`, abra o documento `empresas/{companyId}` da empresa correta e adicione:
+   Cole o JSON integral quando o CLI solicitar. Nunca coloque a chave em JavaScript do navegador, `.env` versionado ou no Git.
+4. No Firestore do projeto `perowba-finance`, localize o documento real `empresas/{companyId}` da empresa que controla o Sports e adicione:
 
    ```json
    {
@@ -35,25 +35,43 @@ Esta versão prepara a publicação de produtos e a sincronização de dados/est
    }
    ```
 
-   Não habilite outras empresas. Confirme o `companyId` pelo perfil de administrador antes de alterar esse documento.
-
-4. Faça deploy das Cloud Functions no projeto `perowba-finance` após revisar o projeto selecionado:
+   `companyId` é o ID do documento da empresa no Gestão, não o ID do projeto Firebase. Não habilite outras empresas.
+5. Faça primeiro deploy somente da função nova:
 
    ```bash
-   firebase use perowba-finance
-   firebase deploy --only functions
+   firebase deploy --only functions:sincronizarProdutoPerowbaSports
    ```
 
-5. Faça primeiro o teste com um produto de teste com SKU exclusivo, cor preenchida e `Publicar no Perowba Sports` marcado.
+6. Teste com um produto de teste que tenha SKU, cor e `Publicar no Perowba Sports` marcado.
 
-## Limitação de segurança que ainda exige configuração
+## Regras e segurança do Sports
 
-O ZIP do Perowba Sports recebido não contém `firestore.rules` nem `firebase.json`. O código do navegador agora evita sobrescrever estoque/preço/variações de produtos vinculados em operações normais do painel, mas isso **não substitui regras de segurança do Firestore**. Antes de produção, é obrigatório revisar as regras diretamente no projeto `perowba-sports` para impedir que clientes autenticados alterem campos sincronizados (`sku`, `cor`, `preco`, `variacoes`, `tamanhos`, `estoque`, `origemGestao` e `ativo`) em produtos com `origemGestao`.
+O projeto Sports inclui `firebase/firestore.rules`. As regras permitem leitura pública dos produtos da empresa `perowba-sports`, restringem a administração ao UID configurado no arquivo e protegem os campos de produtos vinculados ao Gestão contra edição pelo cliente. O Admin SDK da Cloud Function ignora regras de cliente, mas continua sujeito ao IAM da conta de serviço.
 
-## Testes pendentes antes de produção
+Antes de publicar as regras, confirme que o UID administrador da regra corresponde ao administrador real do Firebase Authentication. Faça backup e publique as regras separadamente, somente depois de validar o painel:
 
-- Validar a conta de serviço e o secret.
-- Confirmar o `companyId` correto e habilitar apenas essa empresa.
-- Testar publicação, alteração de preço, baixa por venda, cancelamento/devolução e movimentação de estoque.
-- Testar despublicação e garantir que produtos não vinculados permaneçam intactos.
-- Aplicar regras de Firestore no Sports para bloquear alterações diretas nos campos controlados pelo Gestão.
+```bash
+firebase use perowba-sports
+firebase deploy --only firestore:rules
+```
+
+Não use esse comando para publicar Hosting.
+
+## Testes obrigatórios
+
+- Produto sem SKU ou cor não fica ativo no catálogo.
+- Produto sem `publishToSports: true` não é publicado.
+- Produto publicado aparece uma única vez, com vínculo `origemGestao`.
+- Alteração de preço e estoque no documento do produto atualiza o Sports.
+- Tamanhos e quantidades são enviados como `variacoes`.
+- Despublicar, desativar ou excluir o produto no Gestão desativa o vínculo no Sports.
+- Fotos e descrição cadastradas no Sports permanecem intactas.
+- Produtos criados diretamente no Sports não são alterados pela integração.
+- Uma empresa sem `sportsIntegration.enabled: true` não sincroniza.
+- Testar separadamente venda, cancelamento, movimentação de estoque e recebimento de compra.
+
+## Limitações conhecidas
+
+- Esta entrega adiciona a rotina servidor-servidor, mas não configura a conta de serviço, o Secret Manager nem o documento `sportsIntegration` da empresa. Essas etapas dependem do administrador dos projetos.
+- Não foi feito deploy nem teste real entre os dois projetos nesta entrega.
+- O catálogo recebe preço base único e variações por tamanho com esse preço. Preços diferentes por tamanho não fazem parte do modelo de produto do Gestão recebido.
